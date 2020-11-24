@@ -20,26 +20,21 @@ def logtransform(data):
     return np.log(data+1)
 
 sp = 25
-#ff = np.load('prep_CCA_sp%d_smin%d_%s_%.5f.npz'%(sp, mins, opts[0], opts[1]))
 Allvars = False
 noise = [True,False]
 plott=True#False#
 logtransform_data = False
 
-minss = [100,200, 300, 400, 500, 600, 700, 800, 900,1000]
-if(sp==6):
-    xiss = np.arange(0.0001,0.008, 0.0001)#np.arange(0.0001,0.006, 0.00025)
-elif(sp==25):
-    xiss = np.arange(0.0001,0.008, 0.0001)
-elif(sp==11):
-    xiss = np.arange(0.0001,0.008, 0.0001)
-elif(sp==250):
-    xiss = np.arange(0.0001,0.008, 0.0001)
-xiss = np.arange(0.0001,0.01, 0.0001)
-#xiss = np.arange(0.0001,0.00025, 0.00025) 
+minss = [100,200, 300, 400, 500, 600, 700, 800, 900,1000] # The s_min values
+xiss = np.arange(0.0001,0.01, 0.0001) # The xi values
 
-VIFt = 3.06
+VIFt = 3.06 # Put a threshold on the VIF
 
+# keep track of the results
+# F and D stand for Foram and Dino
+# noise keeps track of CCA results if noisy locations are included
+# cluster keeps track of results if noisy locations are excluded
+# VIF keep track of the variance inflation factor (VIF)
 FNoise = np.zeros((len(minss), len(xiss)))
 DNoise = np.zeros((len(minss), len(xiss)))
 FCluster = np.zeros((len(minss), len(xiss)))
@@ -126,10 +121,7 @@ for mini,mins in enumerate(minss):
             
                 if(len(Y.columns)>1):
                     if((calc_vif(Y)['VIF']>VIFt).any()):
-                        DVIF[mini,xii] = 1
-#                        print('VIF test')
-#                        print(calc_vif(Y))
-                
+                        DVIF[mini,xii] = 1                
                 
                 CCA = cca(Y,X)
     
@@ -170,8 +162,6 @@ for mini,mins in enumerate(minss):
                 if(len(Y.columns)>1):
                     if((calc_vif(Y)['VIF']>VIFt).any()):
                         FVIF[mini,xii] = 1
-#                        print('VIF test')
- #                       print(calc_vif(Y))
                 if(Y.shape[0]>1):
                     CCA = cca(Y,X)
                 else:
@@ -182,7 +172,6 @@ for mini,mins in enumerate(minss):
                 else:
                     FCluster[mini,xii] = np.sum(CCA.proportion_explained[:len(CCA.proportion_explained)//2])
             else:
-#                print(mins, xis)
                 FCluster[mini,xii] = np.nan
 
 #%%
@@ -191,11 +180,9 @@ sns.set(style='whitegrid',context='paper', font_scale=2)
 fs=20
 
 
-# Create the colormap:                
-#colors1 = plt.cm.Blues(np.linspace(0., 1, 128))[-50:-47]
+# Create the colormap
 colors2 = plt.cm.RdGy(np.linspace(0, 1, 128))[::-1]
 # combine them and build a new colormap
-#colors = np.vstack((colors1, colors2))
 cmap1 = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors2)
 cmap1.set_bad("tab:blue")
 
@@ -210,14 +197,11 @@ for i, idx in enumerate(xticks):
     else:
         xticklabels.append('')
         
-#xticklabels = [np.round(xiss[idx],5) for idx in xticks]
 
 DN = (DCluster-DNoise)
 FN = (FCluster-FNoise)
-#FN[FVIF==1] = np.nan#-2
-#DN[DVIF==1] = np.nan#-2
-FN[FN==0] = np.nan#-2
-DN[DN==0] = np.nan#-2
+FN[FN==0] = np.nan
+DN[DN==0] = np.nan
 
 DN = pd.DataFrame(data=DN, index=minss, columns=xiss)
 FN = pd.DataFrame(data=FN, index=minss, columns=xiss)
@@ -238,10 +222,9 @@ g1.set_xlabel('$\\xi$', fontsize=fs)
 
 
 g2 = sns.heatmap(FN,cmap=cmap1,cbar=True,ax=ax[1],  vmin=-0.35, vmax=0.35, 
-                 cbar_ax=ax[2], yticklabels=False)#, annot=True)
+                 cbar_ax=ax[2], yticklabels=False)
 ax[1].set_xticks(xticks+0.5)
 ax[1].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
-#g2.set_ylabel('$s_{min}$')
 g2.set_title('(b) foraminifera', fontsize=fs)
 g2.set_xlabel('$\\xi$', fontsize=fs)
 

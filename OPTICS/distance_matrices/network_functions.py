@@ -8,11 +8,8 @@ Created on Mon Jun  8 16:15:35 2020
 from numba import jit
 import numpy as np
 import math
-import matplotlib.pylab as plt
-from scipy import sparse
-import networkx as nx
-import scipy
 from pandas import read_csv
+from scipy.spatial.distance import pdist, squareform
 #%% To read datasets
 def readForamset(name):
     file = open(name)
@@ -111,267 +108,86 @@ def get_weighted_edges(TM):
             res.append((i,-j, TM[i,j]))
     return res
 
-#%% classes 
-class bipartite_network(object):
-    """
-    Class to  handle bipartite network analysis.    
-    """
+#%%
+def check_symmetric(a, rtol=1e-05, atol=1e-08):
+    # returns True if the matrix a is symmetric
+    return np.allclose(a, a.T, rtol=rtol, atol=atol)
+
+def normalise(X):
+    return X / np.max(X)
+
+def normalise2(X):
+    X = X - np.min(X)
+    return X / np.max(X)
+
+def standardize(X):
+    return (X- np.mean(X)) / np.std(X)
+
+def direct_embedding(lons, lats):
+    r0 = 6371.
+    a = np.pi/180.
+    x = np.array([r0 * np.cos(a * la) * np.cos(a * lo)  for lo, la in zip(lons, lats)])
+    y = np.array([r0 * np.cos(a * la) * np.sin(a * lo)  for lo, la in zip(lons, lats)])
+    z = np.array([r0 * np.sin(a * la)  for la in lats])
+    X = np.concatenate((x[:,np.newaxis],y[:,np.newaxis],z[:,np.newaxis]), axis=1)
+
+    assert X.shape[0]==len(x)
+    return X
+
+def find_nearest_2a(lons, lats, lon, lat):
+    dist = []
+    dist = np.sqrt((lons-lon)**2+(lats-lat)**2)
+    idl = np.argmin(dist)
+    return lons[idl], lats[idl]
+
+def find_nearest_args(vLons, vLats, Flats, Flons):
+    args = []
+    unlons = vLons
+    unlats = vLats
+    for i in range(len(Flons)):
+        lon, lat = find_nearest_2a(unlons, unlats, Flons[i], Flats[i])
+        args.append(np.where(np.logical_and(vLons==lon, vLats==lat))[0][0])
+    return np.array(args)
+
+def MDS_data(X, ndim=2):
+    X = X / X.sum(axis=1)[:,np.newaxis]
+    assert (np.isclose(np.sum(X, axis=1),1)).all()
+    print(X.shape)
+    print("Computing classical MDS embedding (takes a while!)")
+    D = pdist(X, metric='euclidean')
+    n = X.shape[0]
+    del X
+    D2 = squareform(D**2)
+    del D
+    print("D**2 computed")
     
-    def __init__(self, B):
-        self.adjacency_matrix = B
-        self.N = B.shape[0]
-        self.M = B.shape[1]        
+    H = np.eye(n) - np.ones((n, n))/n
+    K = -H.dot(D2).dot(H)/2
+    print("K computed")
+    del D2
+    vals, vecs = np.linalg.eigh(K)
+    del K
+    print("Done!")
+    indices   = np.argsort(vals)[::-1]
+    vals = vals[indices]
+    vecs = vecs[:,indices]
+    indices_relevant, = np.where(vals > 0)
+    Xbar  = vecs[:,indices_relevant].dot(np.diag(np.sqrt(vals[indices_relevant])))
+    return vals, Xbar[:,:ndim]
 
+#%%
+@jit(nopython=True)
+def dis_from_reach_jit(X, reachability, args):
+    # calculate the reachability distance
+    for i in range(len(args)):
+        for j in range(len(args)):
+            if(args[i]<args[j]):
+                X[i,j] = max(reachability[args[i]:args[j]]) - min(reachability[args[i]:args[j]])
+                X[j,i] = X[i,j]   
+    return X
 
-    def projection_adjacency_matrix(self, space = 'X'):
-        """
-        Return adjacency matrix for projection, i.e. GG^T (or G^TG)
-        """
-        if space == 'X':
-            return self.adjacency_matrix.dot(self.adjacency_matrix.transpose())
-        
-        elif space == 'Y': 
-            return self.adjacency_matrix.transpose().dot(self.adjacency_matrix)
-
-     
-    def projection_laplacian_spectrum(self, K=20):
-        """
-        Return spectrum of the projection of the bipartite network, cf. eq. (10)
-        """
-        
-        p = np.array(sparse.csr_matrix.sum(self.adjacency_matrix.T, axis=1))[:,0]
-        p = self.adjacency_matrix.dot(p)
-        PI_p_inv_sqrt = sparse.diags([1/np.sqrt(pi) if pi!=0 else 0 for pi in p])
-        R = PI_p_inv_sqrt.dot(self.adjacency_matrix)
-        u, s, vt = sparse.linalg.svds(R, K)
-        indices = np.argsort(s)[::-1]    
-        u=u[:,indices]
-        s = s[indices]
-        vt = vt[indices,:]
-        return [PI_p_inv_sqrt.dot(u), s, vt.transpose()]
-
-
-def construct_dendrogram(networks):
-    """
-    Construct a dendrogram from a hierarchical list of 'undirected_network' objects
-    - networks: list of network groups. len(networks[0])=1, len(networks[1])=2, etc.
-    Note that this ia a bit hacky, as the NCut increases with the number of clusters, which is
-    different from the usual dendrogram... Therefore, we flip the axis later when plotting.
-    """
-    K = len(networks)
-    network_labels = [[nw.cluster_label for nw in networks[i]] for i in range(K)]
-    linkage_labels = [[nw.cluster_label for nw in networks[i]] for i in range(K)]
-    original_obs = [[1 for _ in networks[i]] for i in range(K)]
-    n = len(network_labels[-1])
-    Z = np.zeros((n-1,4)) #linkage function
-    for i in range(1,len(network_labels))[::-1]:
-        network_label1 = network_labels[i][-1]
-        network_label2 = network_labels[i][-2]
-        label = np.min([network_label1, network_label2])
-        i_merged = np.argwhere(network_labels[i-1]==label)[0][0]
-        new_label = n + n-1-i
-        old_label = linkage_labels[i-1][i_merged]
-        for j in range(i):
-            linkage_labels[j] = [l if l!=old_label else new_label for l in linkage_labels[j]]
-            original_obs
-        Z[n-1-i][0] = linkage_labels[i][-1]
-        Z[n-1-i][1] = linkage_labels[i][-2]
-        
-    ncut = []
-    for i in range(len(networks)):
-        r = np.sum([networks[i][j].rho for j in range(len(networks[i]))])
-        ncut.append(len(networks[i])-r)
-    
-    ncut=np.array(ncut)
-    #For the Ncut axis, we make an ugly hack (as the Ncut increases with the number of clusters).
-    #First define the Ncuts the wrong way around. Then adjust it in the plotting script. 
-    Z[:,2]= np.max(ncut[1:]) - ncut[1:][::-1]+.2
-    return Z
-    
-
-class undirected_network(object):
-    """
-    Class to handle analysis of undirected networks
-    """
-    
-    def __init__(self, adjacency_matrix, cluster_indices=np.array([]), 
-                 cluster_volume=np.array([]), cluster_label = 0):
-        
-        """
-        - adjacency_matrix: format sparse.csr_matrix. If it is not symmetric it is symmetrized.
-        - cluster_indices: indices corresponding to network domain.
-        - cluster_volume: vector of volume of the nodes inside the cluster. The volume of a node is equal to
-        the sum over all the weights it connects to. The colume of a set of nodes is equal to the
-        denomiator of a term in NCut, cf. eq. (6)
-        - cluster_label: each cluster receives a label so that we can later distinguish them.
-        """
-        if(len(cluster_indices)==0): cluster_indices = np.array(range(adjacency_matrix.shape[0]))
-        if(len(cluster_volume)==0): cluster_volume = np.array(sparse.csr_matrix.sum(adjacency_matrix, axis=1))[:,0]
-        
-        self.adjacency_matrix = adjacency_matrix
-        self.cluster_indices = cluster_indices
-        self.cluster_volume = cluster_volume
-        self.N = adjacency_matrix.shape[0]
-        self.cluster_label = cluster_label
-        self.rho = np.sum(self.adjacency_matrix)/np.sum(self.cluster_volume)
-        assert(len(cluster_indices) == self.adjacency_matrix.shape[0])
-        assert(len(cluster_volume) == len(cluster_indices))
-        print('Construct undirected network.')
-    
-    
-    def __del__(self):
-        print('Adjacency matrix object deleted')
-
-      
-    def largest_connected_component(self):
-
-        """
-        Determine connected components
-        """
-        
-        print('Find largest connected component.')
-        
-        G = nx.from_scipy_sparse_matrix(self.adjacency_matrix, create_using = nx.Graph())
-        components = np.array(list(nx.connected_components(G)))
-        component_lengths = np.array([len(s) for s in components])
-        component_inds = np.argsort(component_lengths)[::-1]
-        components_sorted = components[component_inds]
-        component_lengths = np.array([len(c) for c in components_sorted])
-        
-        print('Lengths of components (>1)')
-        print(component_lengths[component_lengths>1])
-        
-        #Largest component
-        inds = list(components_sorted[0])
-        sub_adjacency_matrix = self.adjacency_matrix[inds, :][:, inds]
-        sub_cluster_indices = self.cluster_indices[inds]
-        sub_cluster_volume = self.cluster_volume[inds]
-        sub_cluster_label = self.cluster_label
-        return undirected_network(sub_adjacency_matrix, sub_cluster_indices, 
-                                               sub_cluster_volume, sub_cluster_label)
-        
-    
-    def compute_laplacian_spectrum(self, K=20, plot=False):
-        """
-        Comput eigenvectors for clustering from symmetric nocmralized Laplacian
-        """
-        d = np.array(sparse.csr_matrix.sum(self.adjacency_matrix, axis=1))[:,0]
-        D_sqrt_inv = scipy.sparse.diags([1./np.sqrt(di) if di!=0 else 0 for di in d ])
-        L = sparse.identity(self.N) - (D_sqrt_inv.dot(self.adjacency_matrix)).dot(D_sqrt_inv)
-        print('Computing spectrum of symmetric normalized Laplacian')
-        w, v = sparse.linalg.eigsh(L, k=K, which = 'SM')
-        inds = np.argsort(w)
-        w = w[inds]
-        v = v[:,inds]
-        
-        if plot:
-            plt.plot(w, 'o')
-            plt.title('Eigenvalues of symmetric normalized Laplacian')
-            plt.grid(True)
-            plt.show()
-        
-        self.Lsym_eigenvectors =  D_sqrt_inv.dot(v)
-        self.Lsym_eigenvalues =  D_sqrt_inv.dot(v)
-        return w, D_sqrt_inv.dot(v)
-   
-
-    def drho_split(self, indices_1, indices_2):
-        """
-        If we propose to split a cluster, this function returns the changes in the coherence ratio for a split into
-        indices_1 and indices_2. We maximize this change in the coherence ratio, which is equal to
-        minimizing the NCut.
-        """
-        cluster_volume_1 = np.sum(self.cluster_volume[indices_1])
-        cluster_volume_2 = np.sum(self.cluster_volume[indices_2])
-        stays_in_1 = np.sum(self.adjacency_matrix[indices_1, :][: ,indices_1])
-        stays_in_2 = np.sum(self.adjacency_matrix[indices_2, :][: ,indices_2])        
-        return stays_in_1 / cluster_volume_1 + stays_in_2 / cluster_volume_2 - self.rho
-
-
-    def hierarchical_clustering_ShiMalik(self, K, plots=False):
-        """
-        Implementation of hierarchical clustering according to Shi & Malik 2000.
-        At each iteration, one cluster is added, minimizing the global NCut. We implement this
-        by computing the increase in the coherence ratio rho and choose the maximum increase. This is
-        equivalent to minimizing the global NCut, cf. eq. A2
-        """
-        networks = {}
-        networks[0] = [self]
-        boolean = True
-        i = 0
-        while(i<K and boolean):#for i in range(1,K):
-            i += 1
-            print('Level: ', i)
-            
-            optimal_drhos = []
-            optimal_cutoffs = []
-            
-            for j in range(len(networks[i-1])):
-                nw = networks[i-1][j]
-                if nw.N<100: 
-                    optimal_drhos.append(np.nan)
-                    optimal_cutoffs.append(np.nan)
-                    continue
-        
-                nw.compute_laplacian_spectrum()
-                V_fiedler = nw.Lsym_eigenvectors[:,1]
-                c_range = np.linspace(np.min(V_fiedler), np.max(V_fiedler), 100)[1:]
-                
-                drhos = []
-                for c in c_range:
-                
-                    indices_1 = np.argwhere(V_fiedler<=c)[:,0]
-                    indices_2 = np.argwhere(V_fiedler>c)[:,0]
-                    drhos.append(nw.drho_split(indices_1, indices_2))
-                    
-                drhos = np.array(drhos)
-                if plots:
-                    plt.plot(c_range, drhos)
-                    plt.yscale('log')
-                    plt.grid(True)
-                    plt.title(r'$\Delta \rho_{global}$ for different cutoffs. Network' + str(i) + str(j))
-                    plt.show()
-                cutoff_opt = c_range[np.nanargmax(drhos)]
-                print('Choosing as cutoff: ', str(cutoff_opt))
-                
-                optimal_drhos.append(np.nanmax(drhos))
-                optimal_cutoffs.append(cutoff_opt)
-            
-            if(np.isnan(optimal_drhos).all()):
-                boolean = False
-            else:
-                i_cluster = np.nanargmax(optimal_drhos)
-                print('Splitting cluster ', i_cluster+1)
-                cutoff_cluster = optimal_cutoffs[np.nanargmax(optimal_drhos)]
-                nw_to_split = networks[i-1][i_cluster]
-                V_fiedler = nw_to_split.Lsym_eigenvectors[:,1]
-                indices_1 = np.argwhere(V_fiedler<=cutoff_cluster)[:,0]
-                indices_2 = np.argwhere(V_fiedler>cutoff_cluster)[:,0]
-                
-                #If a cluster is split, the largest sub-cluster receives the same label.
-                if len(indices_1)<len(indices_2):
-                    ind_ = indices_1.copy()
-                    indices_1= indices_2.copy()
-                    indices_2 = ind_
-                
-                adjacency_matrix_1 = nw_to_split.adjacency_matrix[indices_1, :][:, indices_1]
-                adjacency_matrix_2 = nw_to_split.adjacency_matrix[indices_2, :][:, indices_2]
-                cluster_indices_1 = nw_to_split.cluster_indices[indices_1]
-                cluster_indices_2 = nw_to_split.cluster_indices[indices_2]
-                cluster_volume_1 = nw_to_split.cluster_volume[indices_1]
-                cluster_volume_2 = nw_to_split.cluster_volume[indices_2]
-                
-                cluster_label_1 = nw_to_split.cluster_label
-                
-                old_labels = [nw.cluster_label for nw in networks[i-1]]
-                
-                cluster_label_2 = np.max(old_labels)+1
-                
-                network_children = [undirected_network(adjacency_matrix_1, cluster_indices_1, cluster_volume_1, cluster_label_1), 
-                                undirected_network(adjacency_matrix_2, cluster_indices_2, cluster_volume_2, cluster_label_2)]
-                
-                networks[i] = networks[i-1].copy()
-                networks[i].pop(i_cluster)
-                networks[i] += network_children #append in the end
-            
-        self.clustered_networks = networks
+def dis_from_reach(reachability, args):
+    # calculate the reachability distance
+    X = np.zeros((len(args),len(args)))
+    X = dis_from_reach_jit(X, reachability, args)
+    return X
