@@ -3,6 +3,9 @@
 """
 Created on Tue Jun  9 10:43:07 2020
 
+This scripts writes a .npy file which contains the information to plot the cluster 
+edges (figure 2b)
+
 @author: nooteboom
 """
 
@@ -19,7 +22,7 @@ if(__name__=='__main__'):
     exte = [1, 360, -75, 75]
     K = 150# 600 # number of eigenvectors computed
     L = 150 # 600 # number of clusters
-    its = 100 # number of iterations used
+    its = 150 # number of iterations used
     
     # Load the hierarchical clustering objects
     dirRead = '/Volumes/HD/network_clustering/clusteroutput/'
@@ -39,5 +42,5 @@ if(__name__=='__main__'):
     
         #%%   
     np.savez('res/cluster_bounds_%dits_sp%d'%(its,sp),
-             lons=GB.lons(), lats=GB.lats(),directions=GB.directions())
+             lons=GB.lons, lats=GB.lats,directions=GB.directions)
     
