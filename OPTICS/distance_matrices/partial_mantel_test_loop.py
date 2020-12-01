@@ -8,10 +8,7 @@ Created on Thu Sep  3 17:18:32 2020
 
 import numpy as np
 from ecopy import Mantel
-
-def check_symmetric(a, rtol=1e-05, atol=1e-08):
-    # Check if matrix a is symmetric
-    return np.allclose(a, a.T, rtol=rtol, atol=atol)
+import network_functions as nwf
 
 def distm(ff, dist, name='F', ns=False):
     dist = ff[name+dist+'dist']
@@ -21,8 +18,7 @@ def distm(ff, dist, name='F', ns=False):
         args = np.where(labels!=-1)
         dist = dist[args]
         dist = dist[:,args][:,0]
-#        labels = labels[args]
-    assert check_symmetric(dist, 0, 0), 'distm should be completely symmetric'
+    assert nwf.check_symmetric(dist, 0, 0), 'distm should be completely symmetric'
     
     return dist
 
@@ -39,7 +35,6 @@ distances = ['env', 'site','reach']
 no_noisy_sites = False
 
 minss = [100, 200, 300, 400, 500, 600, 700,800,900, 1000]
-#xiss = np.array([0.0001])#np.arange(0.0001,0.008, 0.00025)[:2]
 # mantel test depends on distances only, not on clusters. using xiss is pointless
 xiss = [10.]
 

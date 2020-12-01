@@ -17,6 +17,36 @@ import seaborn as sns
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import matplotlib.ticker as mticker
 import cartopy.feature as cfeature
+from scipy.spatial.distance import pdist, squareform
+from matplotlib.lines import Line2D
+
+def MDS_data(X, ndim=2):
+    # Classical multidimensional scaling of matrix X
+    X = X / X.sum(axis=1)[:,np.newaxis]
+    print(np.min(np.sum(X, axis=1)))
+    assert (np.isclose(np.sum(X, axis=1),1)).all()
+    print(X.shape)
+    D = pdist(X, metric='euclidean')
+    n = X.shape[0]
+    del X
+    D2 = squareform(D**2)
+    del D
+    print("D**2 computed")
+    
+    H = np.eye(n) - np.ones((n, n))/n
+    K = -H.dot(D2).dot(H)/2
+    print("K computed")
+    del D2
+    vals, vecs = np.linalg.eigh(K)
+    del K
+    print("Done!")
+    indices   = np.argsort(vals)[::-1]
+    vals = vals[indices]
+    vecs = vecs[:,indices]
+    indices_relevant, = np.where(vals > 0)
+    Xbar  = vecs[:,indices_relevant].dot(np.diag(np.sqrt(vals[indices_relevant])))
+    return vals, Xbar[:,:ndim]
+
 
 def get_colors():
     # create the colors that are used for plotting
@@ -106,8 +136,8 @@ if(__name__=='__main__'):
     Dinodata = Dinodata[idx]
     
     # apply the multidimensional scaling to the microplankton data
-    Fvalue, XF = nwf.MDS_data(data)
-    Dinovalue, XDino = nwf.MDS_data(Dinodata)    
+    Fvalue, XF = MDS_data(data)
+    Dinovalue, XDino = MDS_data(Dinodata)    
     #%%
     #Optics results
     f = plt.figure(constrained_layout=True, figsize = (20, 13))
@@ -166,13 +196,13 @@ if(__name__=='__main__'):
                        c=colorsg[li], marker="o", s=5)
 
 
-    if opts[i][0] == "xi":
-        a, b = r"$\xi$", opts[i][1]
+    if opts[0][0] == "xi":
+        a, b = r"$\xi$", opts[0][1]
     else:
-        a, b = r"$\epsilon$", opts[i][1]
-        ax.axhline(opts[i][1], color="k")
+        a, b = r"$\epsilon$", opts[0][1]
+        ax.axhline(opts[0][1], color="k")
 
-    ax.set_title(panel_labels[i][0] +  a + ' = ' + str(b), size=10, fontsize=fs)
+    ax.set_title(panel_labels[0][0] +  a + ' = ' + str(b), size=10, fontsize=fs)
     ax.set_ylabel(r"$r(p_i)$", fontsize=fs)
     ax.set_xlabel(r"$i$", fontsize=fs)
     ax.tick_params(labelsize=fs)
@@ -197,10 +227,29 @@ if(__name__=='__main__'):
         if(l!=-1):  
             p = ax.scatter(lon0[w0], lat0[w0], s=markers, c=colorsg[li],
                               alpha=alpha, zorder=9) 
-    ax.set_title(panel_labels[i][1], size=10, fontsize=fs)
+    ax.set_title(panel_labels[0][1], size=10, fontsize=fs)
     ax.add_feature(cfeature.LAND, zorder=100, color='peachpuff')
     ax.add_feature(cfeature.COASTLINE, zorder=100)
     ax.set_ylim(-75,maxlat)
+
+    # Add a scatter of the sediment sample sites
+    sc = ax.scatter(Flons, Flats, s=9, marker='s',
+               zorder=10, edgecolor='whitesmoke')
+    sc.set_facecolor("dimgray")
+    sc = ax.scatter(FlonsDino, FlatsDino, s=15, marker='o',
+               zorder=10, edgecolor='whitesmoke')
+    sc.set_facecolor("dimgray")
+    
+    custom_lines = [Line2D([0], [0], marker='o', markerfacecolor='dimgrey', 
+                           markeredgecolor='whitesmoke', 
+                           lw=0, markersize=9),
+                    Line2D([0], [0], marker='s', markerfacecolor='dimgrey', 
+                           markeredgecolor='whitesmoke', 
+                           lw=0, markersize=9)]
+    
+    legend = ax.legend(custom_lines, ['dinocyst site', 'foraminifera site'], 
+                       bbox_to_anchor=(1., 1.25), loc='upper right', ncol=1,
+                       facecolor='lightgrey', fontsize=fs-2)
 
 #%%The MDS part    
     print('taxonomical distance versus clusters')
@@ -209,9 +258,10 @@ if(__name__=='__main__'):
     for li,l in enumerate(tot_clus):
         w0 = np.where(labelsF==l)
         if(l==-1):  
-            ax.scatter(xF01, xF02, c=noisecolor, s=5,alpha=0.5)
+            ax.scatter(xF01, xF02, c=noisecolor, s=10,alpha=0.5, marker='s')
         else:
-            ax.scatter(xF1[w0], xF2[w0], c=colorsg[li], s=40, alpha=alpha)
+            ax.scatter(xF1[w0], xF2[w0], c=colorsg[li], s=80, 
+                       alpha=alpha, marker='s')
     
     ax.set_title('(d) Foraminifera', fontsize=fs)
     ax.set_xlabel('first MDS axis', fontsize=fs)

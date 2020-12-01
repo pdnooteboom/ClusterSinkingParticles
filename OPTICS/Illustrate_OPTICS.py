@@ -18,7 +18,7 @@ from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import matplotlib.ticker as mticker
 import cartopy.feature as cfeature
 from matplotlib.lines import Line2D
-#from mpl_toolkits import mplot3d
+from mpl_toolkits import mplot3d
 
 def shannon(vec):
     # adaptation of Pielou eveness
