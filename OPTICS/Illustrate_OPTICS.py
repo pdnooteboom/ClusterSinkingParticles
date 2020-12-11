@@ -92,6 +92,8 @@ if(__name__=='__main__'):
     
     # Read Dino data
     FlonsDino, FlatsDino, Dinodata = nwf.readDinoset(readData+'dinodata_red.csv')
+    stations = nwf.readDinoset_stations(readData+'dinodata_stations.csv')
+    species = nwf.readDinoset_species(readData+'dinodata_species.csv')
     Dinodata[np.isnan(Dinodata)] = 0
     idxgz = (Dinodata.sum(axis=1)!=0)
     FlonsDino[FlonsDino<0] += 360
@@ -104,26 +106,30 @@ if(__name__=='__main__'):
     FlatsDino = FlatsDino[idx]
     Dinodata = Dinodata[idx]
     
-    print(np.where(np.logical_and(FlonsDino>300, FlatsDino<-50)))
+#    print(np.where(np.logical_and(FlonsDino>300, FlatsDino<-50)))
     
     i1 = 241
     i2 = 230
+    station1 = stations[i1]; station2 = stations[i2];
     loc1 = [FlonsDino[i1], FlatsDino[i1]]
     loc2 = [FlonsDino[i2], FlatsDino[i2]]
     Dinodata1 = Dinodata[i1]
     Dinodata2 = Dinodata[i2]
-    Dinodata1 = Dinodata1[Dinodata1>0];
-    Dinodata2 = Dinodata2[Dinodata2>0];
+    subs = np.logical_or(Dinodata1>0, Dinodata2>0)
+    Dinodata1 = Dinodata1[subs];
+    Dinodata2 = Dinodata2[subs];
+    species = species[subs]
+    print(species)
     
     c = 18
-    minlon = min(loc1[0], loc2[0]) - c - 5
+    minlon = min(loc1[0], loc2[0]) - c - 15
     maxlon = max(loc1[0], loc2[0]) + c - 5
     minlat = max(min(loc1[1], loc2[1]) - c, -75)
     maxlat = max(loc1[1], loc2[1]) + c - 5
     exte=[minlon, maxlon, minlat, maxlat]
     #%%
     #Optics results
-    f = plt.figure(constrained_layout=True, figsize = (11, 13))
+    f = plt.figure(constrained_layout=True, figsize = (11, 15))
     gs = f.add_gridspec(3, 10)
     gs.update(wspace=0.2)#, hspace=0.05) # set the spacing between axes. 
     #%%
@@ -219,7 +225,7 @@ if(__name__=='__main__'):
                   linewidth=1, color='gray', alpha=0.5, linestyle='--')
     g.xlocator = mticker.FixedLocator([-90, -70, -20, -0, 90, 180])
     g.xlabels_bottom = False
-    g.ylabels_left = False
+    g.ylabels_right = False
     g.xlabel_style = {'fontsize': fs}
     g.ylabel_style = {'fontsize': fs}
     g.xformatter = LONGITUDE_FORMATTER
@@ -247,20 +253,48 @@ if(__name__=='__main__'):
                            lw=0, markersize=15),
                     Line2D([0], [0], marker='D', markerfacecolor='k', 
                            markeredgecolor='k', 
-                           lw=0, markersize=15)]
+                           lw=0, markersize=15),
+                    Line2D([0], [0], marker='s', markerfacecolor=colorsg[2], 
+                           markeredgecolor=colorsg[2], 
+                           lw=0, markersize=12),
+                    Line2D([0], [0], marker='s',markerfacecolor=colorsg[4], 
+                           markeredgecolor=colorsg[4], 
+                           lw=0, markersize=12),
+                    Line2D([0], [0], marker='s', markerfacecolor=colorsg[1], 
+                           markeredgecolor=colorsg[1], 
+                           lw=0, markersize=12)]
     
-    legend = ax.legend(custom_lines, ['clustered site', 'noisy site'], 
-                       bbox_to_anchor=(2, 1.1), loc='upper right', ncol=1,
-                       facecolor='lightgrey', fontsize=fs-2)
+    legend = ax.legend(custom_lines, ['clustered site', 'noisy site', 'cluster 1',
+                                      'cluster 2', 'cluster 3'], 
+                       bbox_to_anchor=(1.7, 1.), loc='upper right', ncol=1,
+                       facecolor='dimgrey', edgecolor='k', fontsize=fs-2)
+    for text in legend.get_texts():
+        text.set_color("snow")
 
 
-#%%The pie charts    
-    sizes = [15, 30, 45, 10]
+#%%The pie charts \x1B[3mHello World\x1B[23m
+    from matplotlib import rc
+    rc('text', usetex=True)
+    def make_italic(ar):
+        res = []
+        for a in ar:
+            res.append(a+'}')
+        return res
+    species = np.array([r"\textit{I. aculeatum}",r"\textit{I. sphaericum}",
+               r"\textit{N. labyrinthus}",r"\textit{O. centrocarpum}",
+               r"\textit{S. ramosus}",r"\textit{P. dalei}",
+               r"\textit{Brigantedinium spp.}",r"\textit{D. chathamensis}", 
+               r"\textit{S. antarctica}"])
+    piecolors = np.array(sns.color_palette("tab10", len(species)))[::-1]
+    print('station clustered: ',station2)
+    print('station noisy: ',station1)
     
     print('taxonomical distance versus clusters')
     ax = f.add_subplot(gs[2,5:])
-    ax.pie(x=Dinodata2, #autopct="%.1f%%", 
-           pctdistance=0.5)
+    wedges, texts =  ax.pie(x=Dinodata2, colors=piecolors,
+                           pctdistance=0.5,#explode = [00.01]*len(Dinodata2),
+                           wedgeprops = {'linewidth': 2, 
+                                         'edgecolor':'k'})
     ax.axis('equal')
     ax.set_title('(d) noisy site', fontsize=fs)
     for tick in ax.xaxis.get_major_ticks():
@@ -268,11 +302,18 @@ if(__name__=='__main__'):
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize(fs)
 
-    ax.text(1.3,0.03,'taxonomy', fontdict={'size':fs, 'color':'k'})
+    legend = ax.legend(wedges, species,
+          title="Species composition",
+          loc="center left",
+          bbox_to_anchor=(1.05, 0.03, 0.5, 1), prop={'size':fs-6})
+    plt.setp(legend.get_title(),fontsize=fs)
+#    ax.text(1.3,0.03,'taxonomy', fontdict={'size':fs, 'color':'k'})
 
     ax = f.add_subplot(gs[2,:5])   
-    ax.pie(x=Dinodata1, #autopct="%.1f%%",
-           pctdistance=0.5)
+    ax.pie(x=Dinodata1[Dinodata1>0], colors=piecolors[Dinodata1>0],
+           pctdistance=0.5,#explode = [00.02]*len(Dinodata1[Dinodata1>0])
+                           wedgeprops = {'linewidth': 2, 
+                                         'edgecolor':'k'})
     ax.axis('equal')
     
     ax.set_title('(c) clustered site', fontsize=fs)
@@ -280,6 +321,7 @@ if(__name__=='__main__'):
         tick.label.set_fontsize(fs)
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize(fs)
+        
         
         
     #%% Save the figure

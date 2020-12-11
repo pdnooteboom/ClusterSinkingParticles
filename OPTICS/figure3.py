@@ -20,10 +20,9 @@ import cartopy.feature as cfeature
 
 if(__name__=='__main__'):
     sns.set(context='paper', style='whitegrid')
-    
-    sp = 250 # the sinking speed (m/day)
+    sp = 6 # the sinking speed (m/day)
     mins = 300 # The variable s_{min} that is used for subplots (a) and (b)
-    fs = 22 # the fontsize for plotting
+    fs = 28 # the fontsize for plotting
     si=8 # the markersize for plotting
     # Set the color bounds for the reachability (vmin and vmax)
     if(sp==6):
@@ -37,7 +36,7 @@ if(__name__=='__main__'):
     markers = 10 # another markersize for plotting
     noisecolor = 'k' # the color for plotting
     #%% Load the OPTICS result
-    dirr = ''
+    dirr = 'OPTICSresults/'
     ff = np.load(dirr+'OPTICS_sp%d_smin%d.npz'%(sp, mins))
     lon0 = ff['lon']
     lat0 = ff['lat']
@@ -49,15 +48,15 @@ if(__name__=='__main__'):
     f = plt.figure(constrained_layout=True, figsize = (20, 12))
     gs = f.add_gridspec(2, 8)
     
-    ax = f.add_subplot(gs[0,3:],projection=ccrs.PlateCarree())
-    ax.set_title('(b)', fontsize=fs)
+    ax = f.add_subplot(gs[0,:5],projection=ccrs.PlateCarree())
+    ax.set_title('(a)', fontsize=fs)
     ax.add_feature(cfeature.LAND, zorder=10)
     ax.add_feature(cfeature.COASTLINE, zorder=10)
     g = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                   linewidth=1, color='gray', alpha=0.5, linestyle='--')
     g.xlocator = mticker.FixedLocator([-180,-90, -0, 90, 180])
     g.xlabels_top = False
-    g.ylabels_left = False
+    g.ylabels_right = False
     g.xlabel_style = {'fontsize': fs}
     g.ylabel_style = {'fontsize': fs}
     g.xformatter = LONGITUDE_FORMATTER
@@ -68,16 +67,16 @@ if(__name__=='__main__'):
     p = ax.scatter(lon0, lat0, s=25, c=reachability, cmap = 'inferno',
                               alpha=0.6, vmin=vs[0], vmax=vs[1])
     
-    cbar = plt.colorbar(p, shrink=.8, aspect=10, orientation='horizontal', extend='max')
+    cbar = plt.colorbar(p, shrink=.8, aspect=10, orientation='horizontal', extend='both')
     
     
-    ax = f.add_subplot(gs[0,:3])
+    ax = f.add_subplot(gs[0,5:])
     
     ax.scatter(np.arange(len(reachability)), 
                reachability[ordering], 
                c=noisecolor, 
                     marker="o", s=5, alpha=0.1)
-    ax.set_title('(a)', size=10, fontsize=fs)
+    ax.set_title('(b)', size=10, fontsize=fs)
     ax.set_ylabel(r"$r(p_i)$", fontsize=fs)
     ax.set_xlabel(r"$i$", fontsize=fs)
     ax.tick_params(labelsize=fs)
@@ -85,7 +84,7 @@ if(__name__=='__main__'):
     #%% Mantel part
     minss = [100, 200, 300, 400, 500, 600,700,800,900, 1000] # s_min values
     perm = 999
-    ff = np.load('distance_matrices/mantel_tests_sp%d_perm%d.npz'%(sp,perm))
+    ff = np.load('manteltest_results/mantel_tests_sp%d_perm%d.npz'%(sp,perm))
     
     DR = ff['DR'][:,0] # Dinocyst R-statistics
     DP = ff['DP'][:,0] # Dinocyst p-value
