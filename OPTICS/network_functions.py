@@ -56,6 +56,16 @@ def readDinoset(name):
     row_sum = data.sum(axis=1)
     data = data / row_sum[:,np.newaxis]
     return lons, lats, data
+
+def readDinoset_stations(name):
+    stations = read_csv(name, usecols=[0]).values[:,0]
+    return stations
+
+def readDinoset_species(name):
+    species = read_csv(name, header=None, skip_blank_lines=True, index_col=False, 
+                       encoding="utf-8", skipinitialspace=True,
+                       dtype=str).values[:]
+    return species[0]
 #%% To calculate similarity measures
 
 #@jit(nopython=True)

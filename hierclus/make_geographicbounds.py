@@ -4,7 +4,7 @@
 Created on Tue Jun  9 10:43:07 2020
 
 This scripts writes a .npy file which contains the information to plot the cluster 
-edges (figure 2b)
+edges (figure 2)
 
 @author: nooteboom
 """
@@ -12,16 +12,13 @@ edges (figure 2b)
 import os
 assert os.environ['CONDA_DEFAULT_ENV']=='Cartopy-py3', 'You should use the conda environment Cartopy-py3'
 import numpy as np
-import seaborn as sns
 import network_functions as nwf
 
 if(__name__=='__main__'):
-
-    sns.set()
-    sp=25
+    sp=6
     exte = [1, 360, -75, 75]
-    K = 150# 600 # number of eigenvectors computed
-    L = 150 # 600 # number of clusters
+    K = 600#150# 600 # number of eigenvectors computed
+    L = 600#150 # 600 # number of clusters
     its = 150 # number of iterations used
     
     # Load the hierarchical clustering objects

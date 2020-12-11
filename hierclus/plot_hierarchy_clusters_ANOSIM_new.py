@@ -38,7 +38,7 @@ def get_cmaps():
 
 if(__name__=='__main__'):
     its = 90 # number of iterations of hierarchical clustering used for plotting
-    sp = 25 # sinking speed (m/day)
+    sp = 6 # sinking speed (m/day)
     if(sp==6):
         K = 600
     elif(sp in [11,250,25]):
@@ -78,13 +78,13 @@ if(__name__=='__main__'):
     field_plot = np.ma.masked_array(field_plot, field_plot==-10000)   
     
     #%%
-    fig = plt.figure(figsize=(14,16))
-    gs = fig.add_gridspec(3, 16)
+    fig = plt.figure(figsize=(14,12))
+    gs = fig.add_gridspec(2, 16)
     ax0 = fig.add_subplot(gs[0,:-1], projection=projection)
     
     # subfig a
-    plf.geo_Fdata2(vLats, vLons, field_plot, ax0, cmap=colors, norm=norm, label=labels,
-                  exte=exte, fs=18, title='(a) Clusters')
+    plf.geo_Fdata2(vLats+0.5, vLons+0.5, field_plot, ax0, cmap=colors, norm=norm, label=labels,
+                  exte=exte, fs=18, title='(a)')
     
     #%
     cmap, cmap_r = get_cmaps() # create colormap for hierarchical bounds
@@ -93,15 +93,15 @@ if(__name__=='__main__'):
     lats = fbounds['lats'][::-1][(K-its):-1]
     lons = fbounds['lons'][::-1][(K-its):-1]
     directions = fbounds['directions'][::-1][(K-its):-1]
-       
-    ax1 = fig.add_subplot(gs[1,:-1], projection=projection)
+
     # plot subfig b
-    plf.geo_Fdata_bounds(lats, lons, directions, ax=ax1, cmap=cmap_r,
-                         projection=projection, lw=lw, fs=18, title='(b) Hierarchy')
+    lws = [2,3,4,7] # The linewidths of the cluster edges
+    plf.geo_Fdata_bounds_black(lats, lons, directions, ax=ax0,
+                         fs=18, lws=lws)
     
-    # add the colorbar
-    ax2 = fig.add_subplot(gs[1,-1])
-    plf.plot_colorbar(ax2, cmap, vmax=len(lons))
+    # add the legend
+    ax2 = fig.add_subplot(gs[0,-1])
+    plf.plot_legend(ax2, its, lws, fs=fs)
     
     #%% subfig c, the ANOSIM results
     perm = 999 # amount of permutations
@@ -121,7 +121,7 @@ if(__name__=='__main__'):
     
     ticks1 = [-0.1, 0,0.1,0.2,0.3, 0.4, 0.5]
     
-    ax = fig.add_subplot(gs[2,1:-2])
+    ax = fig.add_subplot(gs[1,1:-2])
     ax.set_axisbelow(True)
     
     color = 'tab:red'
@@ -142,7 +142,7 @@ if(__name__=='__main__'):
     ax2.set_axisbelow(True)
     
     color = 'tab:blue'
-    ax2.set_title('(c)', fontsize=fs)
+    ax2.set_title('(b)', fontsize=fs)
     ax2.set_ylabel('p-value', color=color, fontsize=fs) 
     ax2.tick_params(axis='y', labelcolor=color)
     ax2.plot(iterations,FP,'-', color=color, lw=lw)
@@ -153,6 +153,6 @@ if(__name__=='__main__'):
     ax2.plot(iterations,DinoP,'--', color=color, lw=lw)
     
     #%
-    plt.savefig('Distance_Matrix/hierarchical_clustering_ANOSIM_its%d_sp%d.pdf'%(its,sp), bbox_inches='tight', 
+    plt.savefig('Distance_Matrix/hierarchical2_clustering_ANOSIM_its%d_sp%d.png'%(its,sp), bbox_inches='tight', 
                 dpi=300)
     plt.show()

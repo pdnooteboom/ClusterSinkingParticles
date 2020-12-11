@@ -403,7 +403,7 @@ class Geographic_bounds(object):
         
     def create(self,its):
         vLats = self.dat['vLats']; vLons= self.dat['vLons'];
-        for c in range(its):
+        for c in range(its+1):
             ti = time()
             self.colors.append(self.cmap(c / its))
             field_plot = np.ones(self.dat['field_plot'].shape)*(-10000)

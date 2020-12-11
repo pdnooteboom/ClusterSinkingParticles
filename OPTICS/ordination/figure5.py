@@ -1,5 +1,5 @@
 import os
-assert os.environ['CONDA_DEFAULT_ENV']=='skbio_env', 'You should use the Cartopy-py3 conda environment here'
+assert os.environ['CONDA_DEFAULT_ENV']=='skbio_env', 'You should use the skbio_env conda environment here'
 import numpy as np
 from skbio.stats.ordination import cca
 import pandas as pd
