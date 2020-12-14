@@ -47,11 +47,14 @@ def MDS_data(X, ndim=2):
     Xbar  = vecs[:,indices_relevant].dot(np.diag(np.sqrt(vals[indices_relevant])))
     return vals, Xbar[:,:ndim]
 
-def get_colors():
+def get_colors(sp=6):
     # create the colors that are used for plotting
     colo = ["gist_ncar","Reds"]#Greys"]
     colorsg = []
-    its = 13
+    if(sp==6):
+        its = 13
+    else:
+        its = 15
     colorsg.append(sns.color_palette(colo[1], n_colors=its+1)[4])
     for k in range(its):
         colorsg.append(sns.color_palette(colo[0], n_colors=its+1)[k])
@@ -61,8 +64,8 @@ def get_colors():
 
 if(__name__=='__main__'):        
     sns.set(context='paper', style='whitegrid')
-    colorsg = get_colors()
     sp = 6 # the sinking speed (m/day)
+    colorsg = get_colors(sp)
     mins = 300 # The s_min parameter
     alpha = 1 # alpha for plotting points
     maxlat = 75 # maximum latitude considered for clustering
@@ -73,6 +76,11 @@ if(__name__=='__main__'):
             opts = [
                     ["xi", 0.002] # use xi clustering
                     ]
+    elif(sp==11):
+        if(mins==200):
+            opts = [
+                    ["xi", 0.004]
+                    ]
     markers = 12 # markersize for plotting
 
     fs=25 # fontsize for plotting
@@ -82,7 +90,7 @@ if(__name__=='__main__'):
     ff = np.load(dirr+'OPTICS_sp%d_smin%d.npz'%(sp, mins))
     lon0 = ff['lon']
     lat0 = ff['lat']
-    reachability = ff['reachability']
+    reachability = ff['reachability'] / 1000
     ordering = ff['ordering']
     predecessor = ff['predecessor']
     core_distances = ff['core_distances']
@@ -200,9 +208,11 @@ if(__name__=='__main__'):
     else:
         a, b = r"$\epsilon$", opts[0][1]
         ax.axhline(opts[0][1], color="k")
+    ax.yaxis.set_label_position("right")
+    ax.yaxis.tick_right()
 
     ax.set_title(panel_labels[0][1] +  a + ' = ' + str(b), size=10, fontsize=fs)
-    ax.set_ylabel(r"$r(p_i)$", fontsize=fs)
+    ax.set_ylabel(r"$10^{-3}\cdot r(p_i)$", fontsize=fs)
     ax.set_xlabel(r"$i$", fontsize=fs)
     ax.tick_params(labelsize=fs)
 
@@ -210,7 +220,7 @@ if(__name__=='__main__'):
     ax.add_feature(cfeature.OCEAN, zorder=0, color=noisecolor)
     g = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
                   linewidth=1, color='gray', alpha=0.5, linestyle='--')
-    g.xlocator = mticker.FixedLocator([-180,-90, -0, 90, 180])
+    g.xlocator = mticker.FixedLocator([-180,-90, -0, 90, 181])
     g.xlabels_top = False
     g.ylabels_right = False
     g.xlabel_style = {'fontsize': fs}
@@ -232,23 +242,25 @@ if(__name__=='__main__'):
     ax.set_ylim(-75,maxlat)
 
     # Add a scatter of the sediment sample sites
-    sc = ax.scatter(Flons, Flats, s=8, marker='o',
+    sc = ax.scatter(Flons, Flats, s=20, marker='X',
                zorder=10)#, edgecolor='lightgray')
     sc.set_facecolor("k")
-    sc = ax.scatter(FlonsDino, FlatsDino, s=30, marker='X',
-               zorder=10)#, edgecolor='lightgray')
+    sc = ax.scatter(FlonsDino, FlatsDino, s=30, marker='o',
+               zorder=10000)#, edgecolor='lightgray')
     sc.set_facecolor("k")
     
-    custom_lines = [Line2D([0], [0], marker='X', markerfacecolor='k', 
+    custom_lines = [Line2D([0], [0], marker='o', markerfacecolor='k', 
                            markeredgecolor='k',#lightgray', 
-                           lw=0, markersize=14),
-                    Line2D([0], [0], marker='o', markerfacecolor='k', 
+                           lw=0, markersize=9),
+                    Line2D([0], [0], marker='X', markerfacecolor='k', 
                            markeredgecolor='k',#lightgray', 
                            lw=0, markersize=9)]
     
-    legend = ax.legend(custom_lines, ['dinocyst site', 'foraminifera site'], 
-                       bbox_to_anchor=(1., 1.35), loc='upper right', ncol=1,
-                       facecolor='darkgrey', fontsize=fs-2)
+    legend = ax.legend(custom_lines, ['dinocyst', 
+                                      'foraminifera'], 
+                       bbox_to_anchor=(1., 1.37), loc='upper right', ncol=1,
+                       facecolor='darkgrey', fontsize=fs-3,
+                       title='sample sites', title_fontsize=fs-2)
 
 #%%The MDS part    
     print('taxonomical distance versus clusters')
@@ -257,10 +269,10 @@ if(__name__=='__main__'):
     for li,l in enumerate(tot_clus):
         w0 = np.where(labelsF==l)
         if(l==-1):  
-            ax.scatter(xF01, xF02, c=noisecolor, s=10,alpha=0.5, marker='o')
+            ax.scatter(xF01, xF02, c=noisecolor, s=10,alpha=0.5, marker='X')
         else:
             ax.scatter(xF1[w0], xF2[w0], c=colorsg[li], s=80, 
-                       alpha=alpha, marker='o')
+                       alpha=alpha, marker='X')
     
     ax.set_title('(d) Foraminifera', fontsize=fs)
     ax.set_xlabel('first MDS axis', fontsize=fs)
@@ -276,10 +288,10 @@ if(__name__=='__main__'):
     for li,l in enumerate(tot_clus):
         w0 = np.where(labelsD==l)
         if(l==-1):  
-            ax.scatter(xD01, xD02, c=noisecolor, s=25,alpha=0.5,marker='X')
+            ax.scatter(xD01, xD02, c=noisecolor, s=25,alpha=0.5,marker='o')
         else:
             p = ax.scatter(xD1[w0], xD2[w0], c=colorsg[li], s=50, 
-                           alpha=alpha,marker='X')
+                           alpha=alpha,marker='o')
     
     ax.set_title('(c) Dinocysts', fontsize=fs)
     ax.set_xlabel('first MDS axis', fontsize=fs)
@@ -290,7 +302,7 @@ if(__name__=='__main__'):
         tick.label.set_fontsize(fs)
         
     #%% Save the figure
-    f.savefig("figs/optics_sp%d_mins%d_withMDS"%(sp,mins), dpi=300, bbox_inches='tight')
+    f.savefig("figs/optics_sp%d_mins%d_withMDS"%(sp,mins), dpi=600, bbox_inches='tight')
     plt.show()
         
         

@@ -22,8 +22,8 @@ def distm(ff, dist, name='F', ns=False):
     
     return dist
 
-np.random.seed(28)
-sp = 6
+np.random.seed(28) # seed for reproducibility of the permutations
+sp = 25 # the sinking speed
 extend = 'SO'
 perm = 999 # amount of permutations used 
 dist1 = 'reach'
@@ -47,8 +47,8 @@ for mini,mins in enumerate(minss):
     print(mins)
     for xii,xis in enumerate(xiss):
         opts = ["xi", xis ]
-  
-        ff = np.load('dms/distance_matrices_sp%d_smin%d_%s_%.5f.npz'%(sp, mins, opts[0], opts[1]))
+        dirr = '/Users/nooteboom/Documents/GitHub/cluster_TM/cluster_SP/density/dens/matrices/'
+        ff = np.load(dirr+'dms/distance_matrices_sp%d_smin%d_%s_%.5f.npz'%(sp, mins, opts[0], opts[1]))
 
         Fdist1 = distm(ff, dist1, name='F')
         Ddist1 = distm(ff, dist1, name='Dino')
