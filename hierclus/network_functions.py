@@ -15,6 +15,9 @@ import networkx as nx
 import scipy
 from pandas import read_csv
 from time import time
+
+assert __name__!='__main__'
+
 #%% To read datasets
 def readForamset(name):
     file = open(name)
