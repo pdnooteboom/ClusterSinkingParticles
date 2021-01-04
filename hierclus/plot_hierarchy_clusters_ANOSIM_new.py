@@ -6,7 +6,6 @@ Created on Tue Sep  8 10:05:10 2020
 @author: nooteboom
 """
 import os
-assert os.environ['CONDA_DEFAULT_ENV']=='Cartopy-py3', 'You should use the conda environment Cartopy-py3'
 import numpy as np
 import matplotlib.pylab as plt
 import matplotlib
@@ -15,7 +14,10 @@ import seaborn as sns
 import cartopy.crs as ccrs
 import matplotlib.colors as mcolors
 from matplotlib.lines import Line2D
+assert os.environ['CONDA_DEFAULT_ENV'] == 'Cartopy-py3', 'You should use \
+the conda environment Cartopy-py3'
 plt.rcParams['axes.axisbelow'] = True
+
 
 def get_cmaps():
     co = plt.cm.Wistia(np.linspace(0, 1, 90))[:5]
@@ -29,130 +31,146 @@ def get_cmaps():
     co9 = plt.cm.Purples(np.linspace(0, 1, 90))[80:85]
     co10 = plt.cm.Greys(np.linspace(0, 1, 100))[95:100]
     colors = np.vstack((co, co2, co3, co4, co5, co6, co7, co8, co9, co10))
-    colors2 = np.vstack((co10[::-1], co9[::-1], co8[::-1], co7[::-1], co6[::-1], 
+    colors2 = np.vstack((co10[::-1], co9[::-1], co8[::-1], co7[::-1],
+                         co6[::-1],
                          co5[::-1], co4[::-1], co3[::-1], co2[::-1], co[::-1]))
-    cmap = mcolors.LinearSegmentedColormap.from_list('my_colormap',colors)
-    cmap_r = mcolors.LinearSegmentedColormap.from_list('my_colormap',colors2)
-    
-    return cmap, cmap_r    
+    cmap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+    cmap_r = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors2)
 
-if(__name__=='__main__'):
-    its = 90 # number of iterations of hierarchical clustering used for plotting
-    sp = 6 # sinking speed (m/day)
-    if(sp==6):
+    return cmap, cmap_r
+
+
+if(__name__ == '__main__'):
+    its = 90  # number of iterations of hierarchical clustering used for plotting
+    sp = 6  # sinking speed (m/day)
+    if(sp == 6):
         K = 600
-    elif(sp in [11,250,25]):
+    elif(sp in [11, 250, 25]):
         K = 150
     exte = [1, 360, -75, 75]
-    
-    projection=ccrs.PlateCarree(0)
-    lw = 3 # linewidth for plotting
-    fs = 18 # fontsize for plotting
+
+    projection = ccrs.PlateCarree(0)
+    lw = 3  # linewidth for plotting
+    fs = 18  # fontsize for plotting
     #%% Plot the clusters (for subfig a)
     # load data
     dirRead = '/Volumes/HD/network_clustering/clusteroutput/'
-    dat = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d.npz'%(sp,exte[0],
-                                                               exte[1],
-                                                               exte[2],
-                                                               exte[3],K,K), allow_pickle=True)
-    
-    vLats = dat['vLats']; vLons= dat['vLons'];
-    networks = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d.npy'%(sp,exte[0],
-                                                               exte[1],
-                                                               exte[2],
-                                                               exte[3],K,K), allow_pickle=True)
+    dat = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d.npz'%(sp,
+                                                                        exte[0],
+                                                                        exte[1],
+                                                                        exte[2],
+                                                                        exte[3],
+                                                                        K, K),
+                allow_pickle=True)
+
+    vLats = dat['vLats']
+    vLons = dat['vLons']
+    networks = np.load(dirRead + 'hier_clus_sp%d_exte%d_\
+                       %d_%d_%d_K%d_L%d.npy'%(sp, exte[0],
+                                              exte[1],
+                                              exte[2],
+                                              exte[3],
+                                              K, K),
+                        allow_pickle=True)
     # The colors of clusters
-    colo = ["Oranges","Blues","Greys","Purples","Greens","Reds"]
+    colo = ["Oranges", "Blues", "Greys", "Purples", "Greens", "Reds"]
     colorsg = sns.color_palette(colo[0], n_colors=18)[1:][:1]
     for k in range(its):
         colorsg += sns.color_palette(colo[(k+1)%len(colo)], n_colors=18)[1:][(-its//len(colo)):(k//len(colo))+1]
     colorsg.reverse()
     labelsg = np.arange(its).astype(str).tolist()
-    field_plot = np.ones(dat['field_plot'].shape)*(-10000)
-    colors = colorsg[:its]; labels=labelsg[:its];
-    bounds = np.arange(-0.5,its+0.5,1)
+    field_plot = np.ones(dat['field_plot'].shape) * (-10000)
+    colors = colorsg[:its]
+    labels = labelsg[:its]
+    bounds = np.arange(-0.5, its+0.5, 1)
     norm = matplotlib.colors.BoundaryNorm(bounds, len(bounds))
-    cmap0 = matplotlib.colors.ListedColormap(colors)  
-    
-    for k in range(its): field_plot[networks[its-1][k].cluster_indices]= networks[its-1][k].cluster_label
-    field_plot = np.ma.masked_array(field_plot, field_plot==-10000)   
-    
+    cmap0 = matplotlib.colors.ListedColormap(colors)
+
+    for k in range(its):
+        field_plot[networks[its-1][k].cluster_indices] = networks[its-1][k].cluster_label
+    field_plot = np.ma.masked_array(field_plot, field_plot == -10000)
+
     #%%
-    fig = plt.figure(figsize=(14,12))
+    fig = plt.figure(figsize=(14, 12))
     gs = fig.add_gridspec(2, 16)
-    ax0 = fig.add_subplot(gs[0,:-1], projection=projection)
-    
+    ax0 = fig.add_subplot(gs[0, :-1], projection=projection)
+
     # subfig a
-    plf.geo_Fdata2(vLats+0.5, vLons+0.5, field_plot, ax0, cmap=colors, norm=norm, label=labels,
-                  exte=exte, fs=18, title='(a)')
-    
+    plf.geo_Fdata2(vLats+0.5, vLons+0.5, field_plot, ax0, cmap=colors,
+                   norm=norm, label=labels,
+                   exte=exte, fs=18, title='(a)')
+
     #%
-    cmap, cmap_r = get_cmaps() # create colormap for hierarchical bounds
+    cmap, cmap_r = get_cmaps()  # create colormap for hierarchical bounds
     # Load the boundaries of hierarchical clusters:
-    fbounds = np.load('res/cluster_bounds_%dits_sp%d.npz'%(K,sp), allow_pickle=True)
+    fbounds = np.load('res/cluster_bounds_%dits_sp%d.npz'%(K, sp), allow_pickle=True)
     lats = fbounds['lats'][::-1][(K-its):-1]
     lons = fbounds['lons'][::-1][(K-its):-1]
     directions = fbounds['directions'][::-1][(K-its):-1]
 
     # plot subfig b
-    lws = [2,3,4,7] # The linewidths of the cluster edges
+    lws = [2, 3, 4, 7]  # The linewidths of the cluster edges
     plf.geo_Fdata_bounds_black(lats, lons, directions, ax=ax0,
-                         fs=18, lws=lws)
-    
+                               fs=18, lws=lws)
+
     # add the legend
-    ax2 = fig.add_subplot(gs[0,-1])
+    ax2 = fig.add_subplot(gs[0, -1])
     plf.plot_legend(ax2, its, lws, fs=fs)
-    
+
     #%% subfig c, the ANOSIM results
-    perm = 999 # amount of permutations
+    perm = 999  # amount of permutations
     # Load result
-    ff = np.load('Distance_Matrix/ANOSIM_hierarchicalclus_sp%d_perm%d_its%d_mlat65.npz'%(sp, perm, its))
+    ff = np.load('Distance_Matrix/ANOSIM_hierarchicalclus\
+                 _sp%d_perm%d_its%d_mlat65.npz'%(sp, perm, its))
     FP = ff['ForamP']
     FR = ff['ForamR']
     DinoP = ff['DinoP']
     DinoR = ff['DinoR']
     iterations = np.arange(len(FP))
-    
-    lw = 2.5 # linewidth
-    
+
+    lw = 2.5  # linewidth
+
     # For the legend
-    custom_lines = [Line2D([0], [0],linestyle='--', color='k', lw=lw),
-                    Line2D([0], [0],linestyle='-', color='k', lw=lw)]
-    
-    ticks1 = [-0.1, 0,0.1,0.2,0.3, 0.4, 0.5]
-    
-    ax = fig.add_subplot(gs[1,1:-2])
+    custom_lines = [Line2D([0], [0], linestyle='--', color='k', lw=lw),
+                    Line2D([0], [0], linestyle='-', color='k', lw=lw)]
+
+    ticks1 = [-0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5]
+
+    ax = fig.add_subplot(gs[1, 1:-2])
     ax.set_axisbelow(True)
-    
+
     color = 'tab:red'
-    ax.set_ylabel('ANOSIM \n test-statistic', color=color, fontsize=fs) 
-    ax.plot(iterations,DinoR,'--', color=color, lw=lw)
-    ax.plot(iterations,FR,'-', color=color, lw=lw, label='')
+    ax.set_ylabel('ANOSIM \n test-statistic', color=color, fontsize=fs)
+    ax.plot(iterations, DinoR, '--', color=color, lw=lw)
+    ax.plot(iterations, FR, '-', color=color, lw=lw, label='')
     ax.tick_params(axis='y', labelcolor=color)
     ax.set_yticks(ticks1)
     ax.set_yticklabels(ticks1, fontsize=fs)
-    ax.set_ylim(-0.15,0.58)
+    ax.set_ylim(-0.15, 0.58)
     ax.set_xlabel('iteration', fontsize=fs)
     for tick in ax.xaxis.get_major_ticks():
-                    tick.label.set_fontsize(fs) 
-    
-    ax.legend(custom_lines, ['Dinocysts','Foraminifera'], fontsize=fs, loc='lower right')
-                    
+                    tick.label.set_fontsize(fs)
+
+    ax.legend(custom_lines, ['Dinocysts', 'Foraminifera'], fontsize=fs,
+              loc='lower right')
+
     ax2 = ax.twinx()
     ax2.set_axisbelow(True)
-    
+
     color = 'tab:blue'
     ax2.set_title('(b)', fontsize=fs)
-    ax2.set_ylabel('p-value', color=color, fontsize=fs) 
+    ax2.set_ylabel('p-value', color=color, fontsize=fs)
     ax2.tick_params(axis='y', labelcolor=color)
-    ax2.plot(iterations,FP,'-', color=color, lw=lw)
-    ticks2 = [0,0.2,0.4,0.6, 0.8]
-    ax2.set_ylim(-0.02,1.04)
+    ax2.plot(iterations, FP, '-', color=color, lw=lw)
+    ticks2 = [0, 0.2, 0.4, 0.6, 0.8]
+    ax2.set_ylim(-0.02, 1.04)
     ax2.set_yticks(ticks2)
     ax2.set_yticklabels(ticks2, fontsize=fs)
-    ax2.plot(iterations,DinoP,'--', color=color, lw=lw)
-    
-    #%
-    plt.savefig('Distance_Matrix/hierarchical2_clustering_ANOSIM_its%d_sp%d.png'%(its,sp), bbox_inches='tight', 
+    ax2.plot(iterations, DinoP, '--', color=color, lw=lw)
+
+    #%%
+    plt.savefig('Distance_Matrix/\
+                hierarchical2_clustering_ANOSIM_its%d_sp%d.png'%(its, sp),
+                bbox_inches='tight',
                 dpi=300)
     plt.show()
