@@ -21,7 +21,8 @@ from matplotlib.lines import Line2D
 from mpl_toolkits import mplot3d
 
 def shannon(vec):
-    # adaptation of Pielou eveness
+    # calculates the shannon entropy based on a vector of relative abundances
+    assert len(vec.shape)==1
     vec = vec / np.sum(vec)
     h = 0
     for i in range(len(vec)):
