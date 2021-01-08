@@ -78,14 +78,11 @@ if(__name__=='__main__'):
     field_plot = np.ma.masked_array(field_plot, field_plot==-10000)   
     
     #%%
-    fig = plt.figure(figsize=(14,16))
-    gs = fig.add_gridspec(3, 16)
-    ax0 = fig.add_subplot(gs[0,:-1], projection=projection)
+    fig = plt.figure(figsize=(14, 12))
+    gs = fig.add_gridspec(2, 16)
+    ax1 = fig.add_subplot(gs[0,:-1], projection=projection)
     
-    # subfig a
-    plf.geo_Fdata2(vLats, vLons, field_plot, ax0, cmap=colors, norm=norm, label=labels,
-                  exte=exte, fs=18, title='(a) Clusters')
-    
+    # subfig a    
     #%
     cmap, cmap_r = get_cmaps() # create colormap for hierarchical bounds
     # Load the boundaries of hierarchical clusters:
@@ -94,13 +91,14 @@ if(__name__=='__main__'):
     lons = fbounds['lons'][::-1][(K-its):-1]
     directions = fbounds['directions'][::-1][(K-its):-1]
        
-    ax1 = fig.add_subplot(gs[1,:-1], projection=projection)
+#    ax1 = fig.add_subplot(gs[1,:-1], projection=projection)
     # plot subfig b
+
     plf.geo_Fdata_bounds(lats, lons, directions, ax=ax1, cmap=cmap_r,
-                         projection=projection, lw=lw, fs=18, title='(b) Hierarchy')
+                         projection=projection, lw=lw, fs=18, title='(a)')
     
     # add the colorbar
-    ax2 = fig.add_subplot(gs[1,-1])
+    ax2 = fig.add_subplot(gs[0,-1])
     plf.plot_colorbar(ax2, cmap, vmax=len(lons))
     
     #%% subfig c, the ANOSIM results
@@ -121,7 +119,7 @@ if(__name__=='__main__'):
     
     ticks1 = [-0.1, 0,0.1,0.2,0.3, 0.4, 0.5]
     
-    ax = fig.add_subplot(gs[2,1:-2])
+    ax = fig.add_subplot(gs[1,1:-2])
     ax.set_axisbelow(True)
     
     color = 'tab:red'
@@ -140,19 +138,19 @@ if(__name__=='__main__'):
                     
     ax2 = ax.twinx()
     ax2.set_yscale("log")
-    ax2.set_ylim(0.001,1)
+    ax2.set_ylim(0.0009,1.05)
     ax2.set_axisbelow(True)
     
     color = 'tab:blue'
-    ax2.set_title('(c)', fontsize=fs)
+    ax2.set_title('(b)', fontsize=fs)
     ax2.set_ylabel('p-value', color=color, fontsize=fs) 
     ax2.tick_params(axis='y', labelcolor=color)
-    ax2.plot(iterations,FP,'-', color=color, lw=lw)
-    ticks2 = [0,0.2,0.4,0.6, 0.8]
-    ticks2 = [0, 0.01, 0.05, 0.1, 1]
+#    ticks2 = [0,0.2,0.4,0.6, 0.8]
+    ticks2 = [0.01, 0.1, 1]
 #    ax2.set_ylim(-0.02,1.04)
     ax2.set_yticks(ticks2)
     ax2.set_yticklabels(ticks2, fontsize=fs)
+    ax2.plot(iterations,FP,'-', color=color, lw=lw)
     ax2.plot(iterations,DinoP,'--', color=color, lw=lw)
     
     #%

@@ -155,6 +155,7 @@ if(__name__ == '__main__'):
               loc='lower right')
 
     ax2 = ax.twinx()
+    ax2.set_yscale("log")
     ax2.set_axisbelow(True)
 
     color = 'tab:blue'
