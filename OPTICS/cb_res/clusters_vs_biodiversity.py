@@ -1,4 +1,3 @@
-
 import os
 assert os.environ['CONDA_DEFAULT_ENV']=='Cartopy-py3', 'You should use the Cartopy-py3 conda environment here'
 import numpy as np
