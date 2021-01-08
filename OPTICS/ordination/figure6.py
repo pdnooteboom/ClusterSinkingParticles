@@ -19,11 +19,12 @@ def logtransform(data):
     data *= 10**4 
     return np.log(data+1)
 
-sp = 25
+sp = 6
 Allvars = False
 noise = [True,False]
 plott=True#False#
 logtransform_data = False
+dirRead = '/Users/nooteboom/Documents/GitHub/cluster_TM/cluster_SP/density/dens/ordination/'
 
 minss = [100,200, 300, 400, 500, 600, 700, 800, 900,1000] # The s_min values
 xiss = np.arange(0.0001,0.01, 0.0001) # The xi values
@@ -47,7 +48,7 @@ for mini,mins in enumerate(minss):
     for xii, xis in enumerate(xiss):
         opts = ["xi", xis]
 
-        ff = np.load('loops/prep_CCA_sp%d_smin%d%s_%.5f.npz'%(sp, mins, opts[0], opts[1]))
+        ff = np.load(dirRead+'loops/prep_CCA_sp%d_smin%d%s_%.5f.npz'%(sp, mins, opts[0], opts[1]))
         #%%
         
         Dinolabels = ff['Dinolabels']

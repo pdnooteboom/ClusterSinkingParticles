@@ -20,7 +20,7 @@ import cartopy.feature as cfeature
 
 if(__name__=='__main__'):
     sns.set(context='paper', style='whitegrid')
-    sp = 25 # the sinking speed (m/day)
+    sp = 11 # the sinking speed (m/day)
     mins = 300 # The variable s_{min} that is used for subplots (a) and (b)
     fs = 28 # the fontsize for plotting
     si=8 # the markersize for plotting
@@ -126,5 +126,5 @@ if(__name__=='__main__'):
                     
     #%% save figure
     
-    f.savefig("reach_mins%d_Mantel_sp%d"%(mins,sp), dpi=300, bbox_inches='tight')
+    f.savefig("figs/reach_mins%d_Mantel_sp%d"%(mins,sp), dpi=300, bbox_inches='tight')
     plt.show()

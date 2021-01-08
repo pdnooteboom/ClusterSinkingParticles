@@ -107,5 +107,5 @@ for sp in spl: # for every sinking speed in spl
             plt.savefig('heatmap_biod_rich_sp%d.pdf'%(sp), dpi=300,bbox_inches='tight')
     elif(extend=='glob'):
         if('shannon'==biot):
-            plt.savefig('heatmapG_biod_shannon_sp%d.png'%(sp), dpi=300,bbox_inches='tight')
+            plt.savefig('figs/heatmapG_biod_shannon_sp%d.png'%(sp), dpi=300,bbox_inches='tight')
     plt.show()

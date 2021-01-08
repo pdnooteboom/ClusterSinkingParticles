@@ -5,7 +5,6 @@ from skbio.stats.ordination import cca
 import pandas as pd
 import matplotlib.pylab as plt
 from copy import copy
-import statsmodels.api as sm
 import seaborn as sns
 import plot_functions as plf
 sns.set(context='paper', style='whitegrid')
@@ -28,7 +27,8 @@ if(sp==25):
     if(mins==400):
         opts = ["xi", 0.03]
 
-ff = np.load('loops/prep_CCA_sp%d_smin%d%s_%.5f.npz'%(sp, mins, opts[0], opts[1]))
+dirr= '/Users/nooteboom/Documents/GitHub/cluster_TM/cluster_SP/density/dens/ordination/'
+ff = np.load(dirr+'loops/prep_CCA_sp%d_smin%d%s_%.5f.npz'%(sp, mins, opts[0], opts[1]))
 Allvars = False
 noise = [True,False]
 bvif = False
@@ -259,12 +259,6 @@ if(True): # create the figure
     
     for m in range(len(CCA2res)):
         for vai, va in enumerate(list(varss.keys())[:2]):
-            X = sm.add_constant(np.array(CCA1res[m]))
-            y = np.array(varss[va][m])
-            reg = sm.OLS(y,
-                         X)  
-            res = reg.fit()
-            plf.plot_regres(fis[vai,m],res, CCA1res[m])
             if(m==0):
                 fis[vai,m].scatter(CCA1res[m][Flabelsfull<0], 
                    varss[va][m][Flabelsfull<0], s=s,marker='+', 
@@ -280,8 +274,7 @@ if(True): # create the figure
                         fis[vai,m].scatter(CCA1res[m][Flabels==dl], 
                            varss[va][m][Flabels==dl], s=s+s2,marker='+', 
                            label=name[m], c=colorsg[li])
-            rs =res.rsquared
-            fis[vai,m].set_title(tits[vai,m] + ' RMS: %.2f'%((res.ssr/X.shape[0])), fontsize=fs)
+            fis[vai,m].set_title(tits[vai,m], fontsize=fs)
             if(va=='temp'):
                 fis[vai,m].set_ylim(templim[0],templim[1])
             elif(va=='N'):
@@ -315,13 +308,7 @@ if(True): # create the figure
             if(va=='temp'):
                 fis2[vai,0].set_ylabel('SST'+units[va], fontsize=fs) 
             else:
-                fis2[vai,0].set_ylabel(va+units[va], fontsize=fs) 
-            X = sm.add_constant(np.array(DinoCCA1res[m]))
-            y = np.array(Dinovarss[va][m])
-            reg = sm.OLS(y,
-                         X)  
-            res = reg.fit()
-            plf.plot_regres(fis2[vai,m],res, DinoCCA1res[m])
+                fis2[vai,0].set_ylabel(va+units[va], fontsize=fs)
             if(m==0):
                 fis2[vai,m].scatter(DinoCCA1res[m][Dinolabels_full<0], 
                    Dinovarss[va][m][Dinolabels_full<0], s=s,marker='+', 
@@ -337,8 +324,7 @@ if(True): # create the figure
                         fis2[vai,m].scatter(DinoCCA1res[m][Dinolabels==dl], 
                            Dinovarss[va][m][Dinolabels==dl], s=s+s2,marker='+', 
                            label=Dinoname[m], c=colorsg[li])
-            rs =res.rsquared
-            fis2[vai,m].set_title(tits2[vai,m] + ' RMS: %.2f'%((res.ssr/X.shape[0])), fontsize=fs)
+            fis2[vai,m].set_title(tits2[vai,m], fontsize=fs)
             if(va=='temp'):
                 fis2[vai,m].set_ylim(templim[0],templim[1])
             elif(va=='N'):

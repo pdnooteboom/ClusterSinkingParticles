@@ -60,6 +60,7 @@ def get_colors(sp=6):
         colorsg.append(sns.color_palette(colo[0], n_colors=its+1)[k])
     colorsg.reverse()
     return colorsg
+
     #%%
 
 if(__name__=='__main__'):        
@@ -243,17 +244,17 @@ if(__name__=='__main__'):
 
     # Add a scatter of the sediment sample sites
     sc = ax.scatter(Flons, Flats, s=20, marker='X',
-               zorder=10)#, edgecolor='lightgray')
+               zorder=10)
     sc.set_facecolor("k")
     sc = ax.scatter(FlonsDino, FlatsDino, s=30, marker='o',
-               zorder=10000)#, edgecolor='lightgray')
-    sc.set_facecolor("k")
+               zorder=10000, edgecolor='k')
+    sc.set_facecolor("white")
     
-    custom_lines = [Line2D([0], [0], marker='o', markerfacecolor='k', 
-                           markeredgecolor='k',#lightgray', 
+    custom_lines = [Line2D([0], [0], marker='o', markerfacecolor='white', 
+                           markeredgecolor='k', 
                            lw=0, markersize=9),
                     Line2D([0], [0], marker='X', markerfacecolor='k', 
-                           markeredgecolor='k',#lightgray', 
+                           markeredgecolor='k',
                            lw=0, markersize=9)]
     
     legend = ax.legend(custom_lines, ['dinocyst', 
