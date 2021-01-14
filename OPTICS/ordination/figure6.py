@@ -7,6 +7,8 @@ import matplotlib.pylab as plt
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from copy import copy
 import matplotlib.colors as mcolors
+import seaborn as sns
+
 def calc_vif(X):
     # Calculating VIF
     vif = pd.DataFrame()
@@ -174,18 +176,22 @@ for mini,mins in enumerate(minss):
                     FCluster[mini,xii] = np.sum(CCA.proportion_explained[:len(CCA.proportion_explained)//2])
             else:
                 FCluster[mini,xii] = np.nan
+#%% Load the significant according to the subsamples
+its = 999
+siglevel = 0.01
+ffsig = np.load('randomsubsamples_sp%d_its%d.npz'%(sp,its))
+percD = ffsig['Dperc']
+percF = ffsig['Fperc']
+assert percD.shape==DNoise.shape
 
-#%%
-import seaborn as sns
-sns.set(style='whitegrid',context='paper', font_scale=2)
+
+
+color1 = plt.cm.copper(np.linspace(0, 1, int(100*(1-siglevel))))
+color2 = plt.cm.Blues(np.linspace(0.8, 1, int(100*siglevel)))
+# combine them and build a new colormap
+cmapp = mcolors.LinearSegmentedColormap.from_list('my_colormap', np.vstack((color2, color1)))
 fs=20
 
-
-# Create the colormap
-colors2 = plt.cm.RdGy(np.linspace(0, 1, 128))[::-1]
-# combine them and build a new colormap
-cmap1 = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors2)
-cmap1.set_bad("tab:blue")
 
 # Set the x ticks:
 num_ticks = len(xiss)
@@ -208,11 +214,11 @@ DN = pd.DataFrame(data=DN, index=minss, columns=xiss)
 FN = pd.DataFrame(data=FN, index=minss, columns=xiss)
 
 
-# The figure
+print('the p-values')
 fig, ax = plt.subplots(1,3, figsize=(16,8),
                        gridspec_kw={'width_ratios':[1,1,0.08]})
 ax[0].get_shared_y_axes().join(ax[1])
-g1 = sns.heatmap(DN,cmap=cmap1,cbar=False,ax=ax[0], vmin=-0.35, vmax=0.35, 
+g1 = sns.heatmap(percD,cmap=cmapp,cbar=False,ax=ax[0], vmin=0, vmax=1, 
                  xticklabels=xticklabels)
 ax[0].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
 ax[0].set_xticks(xticks+0.5)
@@ -222,8 +228,94 @@ g1.set_title('(a) dinocysts', fontsize=fs)
 g1.set_xlabel('$\\xi$', fontsize=fs)
 
 
-g2 = sns.heatmap(FN,cmap=cmap1,cbar=True,ax=ax[1],  vmin=-0.35, vmax=0.35, 
+g2 = sns.heatmap(percF,cmap=cmapp,cbar=True,ax=ax[1],  vmin=0, vmax=1, 
                  cbar_ax=ax[2], yticklabels=False)
+ax[1].set_xticks(xticks+0.5)
+ax[1].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
+g2.set_title('(b) foraminifera', fontsize=fs)
+g2.set_xlabel('$\\xi$', fontsize=fs)
+
+#plt.savefig('heatmap_CCA_sp%d.png'%(sp), dpi=300,bbox_inches='tight')
+plt.show()
+
+
+
+if(False): # if a two-sided test is used
+    sigD = np.full(percD.shape, '')
+    sigF = np.full(percF.shape, '')
+    for i in range(percD.shape[0]):
+        for j in range(percD.shape[1]):
+            if(np.array(DN)[i,j]>=0):
+                if(percD[i,j]>siglevel/2):
+                    sigD[i,j] = 'l'
+            elif(np.array(DN)[i,j]<0):
+                if((1-percD[i,j])>siglevel/2):
+                    sigD[i,j] = 'l'
+                    
+            if(np.array(FN)[i,j]>=0):
+                if(percF[i,j]>siglevel/2):
+                    sigF[i,j] = 'l'
+            elif(np.array(FN)[i,j]<0):
+                if((1-percF[i,j])>siglevel/2):
+                    sigF[i,j] = 'l'
+else: # otherwise a one-sided test is used
+    sigD = (percD<siglevel).astype(str)
+    sigD[sigD=='False'] = 'l'
+    sigD[sigD=='True'] = ''
+    sigF = (percF<siglevel).astype(str)
+    sigF[sigF=='False'] = 'l'
+    sigF[sigF=='True'] = ''
+
+#%
+sns.set(style='whitegrid',context='paper', font_scale=2)
+fs=20
+
+# Create the colormap
+colors2 = plt.cm.RdGy(np.linspace(0, 1, 128))[::-1]
+# combine them and build a new colormap
+cmap1 = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors2)
+cmap1.set_bad("tab:blue") # set the color for nan values
+cmap1.set_under("tab:blue") # set the color for insignificant values
+
+# Set the x ticks:
+num_ticks = len(xiss)
+frac = 6
+xticks = np.linspace(0, (len(xiss) - 1), num_ticks, dtype=np.int)
+xticklabels = []
+for i, idx in enumerate(xticks):
+    if(i%frac==0):
+        xticklabels.append(np.round(xiss[idx],5))
+    else:
+        xticklabels.append('')
+        
+
+DN = (DCluster-DNoise)
+FN = (FCluster-FNoise)
+FN[FN==0] = np.nan
+DN[DN==0] = np.nan
+#FN[np.logical_and(percF>(1-siglevel),~np.isnan(FN))] = -1000
+#DN[np.logical_and(percD>(1-siglevel),~np.isnan(DN))] = -1000
+
+DN = pd.DataFrame(data=DN, index=minss, columns=xiss)
+FN = pd.DataFrame(data=FN, index=minss, columns=xiss)
+
+
+# The figure
+fig, ax = plt.subplots(1,3, figsize=(16,8),
+                       gridspec_kw={'width_ratios':[1,1,0.08]})
+ax[0].get_shared_y_axes().join(ax[1])
+g1 = sns.heatmap(DN,cmap=cmap1,cbar=False,ax=ax[0], vmin=-0.35, vmax=0.35, 
+                 xticklabels=xticklabels, annot=sigD, fmt='')
+ax[0].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
+ax[0].set_xticks(xticks+0.5)
+ax[0].set_yticklabels(minss,fontsize=fs-6, rotation='horizontal')
+g1.set_ylabel('$s_{min}$', fontsize=fs)
+g1.set_title('(a) dinocysts', fontsize=fs)
+g1.set_xlabel('$\\xi$', fontsize=fs)
+
+
+g2 = sns.heatmap(FN,cmap=cmap1,cbar=True,ax=ax[1],  vmin=-0.35, vmax=0.35, 
+                 cbar_ax=ax[2], yticklabels=False, annot=sigF, fmt='')
 ax[1].set_xticks(xticks+0.5)
 ax[1].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
 g2.set_title('(b) foraminifera', fontsize=fs)
