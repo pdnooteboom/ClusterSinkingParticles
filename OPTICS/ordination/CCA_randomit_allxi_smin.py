@@ -12,11 +12,14 @@ from copy import copy
 from random import sample, seed
 from time import time
 
+redFspecies = True
+
 dirRead = '/Users/nooteboom/Documents/GitHub/cluster_TM/cluster_SP\
 /density/dens/ordination/'
 
 dirRead = '/Users/nooteboom/Documents/GitHub/cluster_TM/cluster_SP/density/dens/ordination/'
-sp= 11 # sinking speed
+sp= 250 # sinking speed
+print('sp: ',sp)
 its = 999 # Amount of iterations
 print('its: ',its)
 minss = [100,200,300,400,500,600,700,800,900,1000]
@@ -32,7 +35,11 @@ for mini, mins in enumerate(minss): # loop the s_min values
     print(mini/len(minss))
     for xisi, xis in enumerate(xiss): # loop the xi parameters
         opts = ["xi", xis]
-        ff = np.load(dirRead + 'loops/prep_CCA_sp%d_smin%d%s_%.5f.npz'%(sp, mins, opts[0], opts[1])) # load cca results
+        if(redFspecies):
+#            dirRead = '/Users/nooteboom/Documents/GitHub/cluster_TM/ClusterSinkingParticles/OPTICS/ordination/'
+            ff = np.load( 'loops/redF/prepredF_CCA_sp%d_smin%d%s_%.5f.npz'%(sp, mins, opts[0], opts[1]))# load cca results
+        else:
+            ff = np.load(dirRead + 'loops/prep_CCA_sp%d_smin%d%s_%.5f.npz'%(sp, mins, opts[0], opts[1])) # load cca results
         #%%
         # keep track of the dinocyst results
         Dinolabels = ff['Dinolabels']
@@ -168,7 +175,11 @@ for mini, mins in enumerate(minss): # loop the s_min values
 #            print('F ',np.sum(np.array(varF_explained)>dinovar) / its)
 print('time (seconds): ',time()-ti)
 #%%
-np.savez('randomsubsamples_sp%d_its%d.npz'%(sp,its), 
+if(redFspecies):
+    np.savez('randomsubsamples_redF_sp%d_its%d.npz'%(sp,its), 
+         mins=mins, xis=xis, Dperc=Dperc, Fperc=Fperc)
+else:
+    np.savez('randomsubsamples_sp%d_its%d.npz'%(sp,its), 
          mins=mins, xis=xis, Dperc=Dperc, Fperc=Fperc)
 
 #%%

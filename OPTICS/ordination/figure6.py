@@ -9,17 +9,7 @@ from copy import copy
 import matplotlib.colors as mcolors
 import seaborn as sns
 
-def calc_vif(X):
-    # Calculating VIF
-    vif = pd.DataFrame()
-    vif["variables"] = X.columns
-    vif["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
-
-    return(vif)
-
-def logtransform(data):
-    data *= 10**4 
-    return np.log(data+1)
+redFspecies = False
 
 sp = 6
 Allvars = False
@@ -30,8 +20,6 @@ dirRead = '/Users/nooteboom/Documents/GitHub/cluster_TM/cluster_SP/density/dens/
 
 minss = [100,200, 300, 400, 500, 600, 700, 800, 900,1000] # The s_min values
 xiss = np.arange(0.0001,0.01, 0.0001) # The xi values
-
-VIFt = 3.06 # Put a threshold on the VIF
 
 # keep track of the results
 # F and D stand for Foram and Dino
@@ -50,7 +38,10 @@ for mini,mins in enumerate(minss):
     for xii, xis in enumerate(xiss):
         opts = ["xi", xis]
 
-        ff = np.load(dirRead+'loops/prep_CCA_sp%d_smin%d%s_%.5f.npz'%(sp, mins, opts[0], opts[1]))
+        if(redFspecies):
+            ff = np.load('loops/redF/prepredF_CCA_sp%d_smin%d%s_%.5f.npz'%(sp, mins, opts[0], opts[1]))       
+        else:
+            ff = np.load(dirRead+'loops/prep_CCA_sp%d_smin%d%s_%.5f.npz'%(sp, mins, opts[0], opts[1]))
         #%%
         
         Dinolabels = ff['Dinolabels']
@@ -66,14 +57,7 @@ for mini,mins in enumerate(minss):
         Flabels = ff['Flabels']
         Flabelsfull = copy(Flabels)
         Fenv = ff['Fenv']
-        CCA2res = []
-        CCA1res = []
-        varss = {}
-        for en in envsplt: 
-            varss[en] = [];
-            
-        name = []
-        
+
         Dinoname = []
         DinoCCA2res = []
         DinoCCA1res = []
@@ -107,9 +91,6 @@ for mini,mins in enumerate(minss):
                 Dinoenv = Dinoenv[args]
                 Dinoenv_nn = Dinoenv_nn[args]
             
-            if(logtransform_data):
-                data = logtransform(data)
-            
             X = pd.DataFrame(data, sites, species)
             Y = pd.DataFrame(Dinoenv, sites, envs)
             Y_nn = pd.DataFrame(Dinoenv_nn, sites, envs)    
@@ -121,10 +102,6 @@ for mini,mins in enumerate(minss):
       #      del Y['salt']
 
             if(len(Y.values)!=0):
-            
-                if(len(Y.columns)>1):
-                    if((calc_vif(Y)['VIF']>VIFt).any()):
-                        DVIF[mini,xii] = 1                
                 
                 CCA = cca(Y,X)
     
@@ -148,9 +125,6 @@ for mini,mins in enumerate(minss):
                 Fenv = Fenv[args]
                 Fenv_nn = Fenv_nn[args]
             
-            if(logtransform_data):
-                data = logtransform(data)
-            
             X = pd.DataFrame(data, sites, species)
             Y = pd.DataFrame(Fenv, sites, envs)
             Y_nn = pd.DataFrame(Fenv_nn, sites, envs)
@@ -161,10 +135,7 @@ for mini,mins in enumerate(minss):
             #del Y['temp']
    #         del Y['salt']
             
-            if(len(Y.values)!=0):        
-                if(len(Y.columns)>1):
-                    if((calc_vif(Y)['VIF']>VIFt).any()):
-                        FVIF[mini,xii] = 1
+            if(len(Y.values)!=0):
                 if(Y.shape[0]>1):
                     CCA = cca(Y,X)
                 else:
@@ -178,13 +149,15 @@ for mini,mins in enumerate(minss):
                 FCluster[mini,xii] = np.nan
 #%% Load the significant according to the subsamples
 its = 999
-siglevel = 0.01
-ffsig = np.load('randomsubsamples_sp%d_its%d.npz'%(sp,its))
+siglevel = 0.05
+if(redFspecies):
+    ffsig = np.load('randomsubsamples_redF_sp%d_its%d.npz'%(sp,its))
+else:
+    ffsig = np.load('randomsubsamples_sp%d_its%d.npz'%(sp,its))
+#ffsig = np.load('permutationtest_sp%d_its%d.npz'%(sp,its))
 percD = ffsig['Dperc']
 percF = ffsig['Fperc']
 assert percD.shape==DNoise.shape
-
-
 
 color1 = plt.cm.copper(np.linspace(0, 1, int(100*(1-siglevel))))
 color2 = plt.cm.Blues(np.linspace(0.8, 1, int(100*siglevel)))
@@ -259,10 +232,10 @@ if(False): # if a two-sided test is used
                 if((1-percF[i,j])>siglevel/2):
                     sigF[i,j] = 'l'
 else: # otherwise a one-sided test is used
-    sigD = (percD<siglevel).astype(str)
+    sigD = (percD<=siglevel).astype(str)
     sigD[sigD=='False'] = 'l'
     sigD[sigD=='True'] = ''
-    sigF = (percF<siglevel).astype(str)
+    sigF = (percF<=siglevel).astype(str)
     sigF[sigF=='False'] = 'l'
     sigF[sigF=='True'] = ''
 
@@ -287,14 +260,11 @@ for i, idx in enumerate(xticks):
         xticklabels.append(np.round(xiss[idx],5))
     else:
         xticklabels.append('')
-        
 
 DN = (DCluster-DNoise)
 FN = (FCluster-FNoise)
 FN[FN==0] = np.nan
 DN[DN==0] = np.nan
-#FN[np.logical_and(percF>(1-siglevel),~np.isnan(FN))] = -1000
-#DN[np.logical_and(percD>(1-siglevel),~np.isnan(DN))] = -1000
 
 DN = pd.DataFrame(data=DN, index=minss, columns=xiss)
 FN = pd.DataFrame(data=FN, index=minss, columns=xiss)
@@ -321,5 +291,8 @@ ax[1].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
 g2.set_title('(b) foraminifera', fontsize=fs)
 g2.set_xlabel('$\\xi$', fontsize=fs)
 
-plt.savefig('heatmap_CCA_sp%d.png'%(sp), dpi=300,bbox_inches='tight')
+if(redFspecies):
+    plt.savefig('heatmap_redF_CCA_sp%d.png'%(sp), dpi=300,bbox_inches='tight')    
+else:
+    plt.savefig('heatmap_CCA_sp%d.png'%(sp), dpi=300,bbox_inches='tight')
 plt.show()
