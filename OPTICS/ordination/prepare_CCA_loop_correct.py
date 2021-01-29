@@ -16,6 +16,7 @@ from time import time
 from sklearn.cluster import  cluster_optics_xi, cluster_optics_dbscan
 import matplotlib
 from netCDF4 import Dataset
+from scipy.interpolate import griddata
 
 
 def check_symmetric(a, rtol=1e-05, atol=1e-08):
@@ -87,6 +88,8 @@ def MDS_data(X, ndim=2):
 
 #%% vars
 
+redFspecies = True
+
 sp = 250
 extend = 'SO'
 maxlat = 5
@@ -111,6 +114,15 @@ for mins in [100,200,300,400,500,600,700,800,900,1000]:#[800,900]:
         Flats, Flons = nwf.readForamset_lonlats(readData + 'ForamData.csv')
         Flons[np.where(Flons<0)]+=360
         
+        if(redFspecies): # only keep species of which we know they are
+                                # surface dwelling
+            idxF = [21,14,2,24,46,47,11]
+            data = data[:,(idxF)]
+            Foramspecies = Foramspecies[idxF]
+            print('amount of left over sediment locations for the forams: ',
+                  len((np.sum(data, axis=1)>0)))
+            assert False
+        
         # Read Dino data
         FlonsDino, FlatsDino, Dinodata = nwf.readDinoset(readData+'dinodata_red.csv')
         FlonsDino[FlonsDino<0] += 360
@@ -127,7 +139,6 @@ for mins in [100,200,300,400,500,600,700,800,900,1000]:#[800,900]:
             Dinodata = Dinodata[idx]
     
         #%%
-        from scipy.interpolate import griddata
         
         dirRead = '/Users/nooteboom/Documents/GitHub/cluster_TM/cluster_SP/density/dens/matrices/WOAdata/'
         envs = ['temp', 'salt', 
@@ -205,12 +216,19 @@ for mins in [100,200,300,400,500,600,700,800,900,1000]:#[800,900]:
         Dinolabels = labels[args]
         
         #%%
-        np.savez('loops/prep_CCA_sp%d_smin%d%s_%.5f'%(sp, mins, opts[0], opts[1]),
-                 envnames = envs,
-                 Dinolabels=Dinolabels, Dinoenv = Dinoenv, Dinodata=Dinodata,
-                 Flabels=Flabels, Fenv = Fenv, data=data,
-                 lon0 = lon0, lat0= lat0, 
-                 Dinoenv_nn = Dinoenv_nn, Fenv_nn = Fenv_nn)
-        
+        if(redFspecies):
+            np.savez('loops/redF/prepredF_CCA_sp%d_smin%d%s_%.5f'%(sp, mins, opts[0], opts[1]),
+                     envnames = envs,
+                     Dinolabels=Dinolabels, Dinoenv = Dinoenv, Dinodata=Dinodata,
+                     Flabels=Flabels, Fenv = Fenv, data=data,
+                     lon0 = lon0, lat0= lat0, 
+                     Dinoenv_nn = Dinoenv_nn, Fenv_nn = Fenv_nn)
+        else:
+            np.savez('loops/prep_CCA_sp%d_smin%d%s_%.5f'%(sp, mins, opts[0], opts[1]),
+                     envnames = envs,
+                     Dinolabels=Dinolabels, Dinoenv = Dinoenv, Dinodata=Dinodata,
+                     Flabels=Flabels, Fenv = Fenv, data=data,
+                     lon0 = lon0, lat0= lat0, 
+                     Dinoenv_nn = Dinoenv_nn, Fenv_nn = Fenv_nn)
 
 
