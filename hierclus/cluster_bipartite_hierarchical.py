@@ -32,7 +32,8 @@ if(__name__ == '__main__'):
     sns.set()
 
     ddeg = 1  # resolution of the binning
-    sp = 25  # sinking speed m/day
+    sp = 6  # sinking speed m/day
+    season = 'winter' # ''
     dd = 10  # the depth at which the particle backtracking was stopped (10m)
     res = 1  # resolution of the release lcoations
 
@@ -43,12 +44,18 @@ if(__name__ == '__main__'):
     tmdir = '/Volumes/HD/network_clustering/PT/Transportation_matrix/'
 
     # Load the Transportation matrix file
-    if(type(sp) == str):
-        data = np.load(tmdir + 'TMglobal_bin'+str(ddeg)+'_dd'+str(int(dd)) +
-                       '_sp'+sp+"_res"+str(res) + '.npz')
+    if(season==''):
+        if(type(sp) == str):
+            data = np.load(tmdir + 'TMglobal_bin'+str(ddeg)+'_dd'+str(int(dd)) +
+                           '_sp'+sp+"_res"+str(res) + '.npz')
+        else:
+            data = np.load(tmdir + 'TMglobal_bin'+str(ddeg)+'_dd'+str(int(dd)) +
+                           '_sp'+str(int(sp))+"_res"+str(res) + '.npz')
     else:
         data = np.load(tmdir + 'TMglobal_bin'+str(ddeg)+'_dd'+str(int(dd)) +
-                       '_sp'+str(int(sp))+"_res"+str(res) + '.npz')
+                           '_sp'+str(int(sp))+"_res"+str(res) + 
+                           '_season%s'%(season) + '.npz')
+
     TM = data['TM'][:]
     Lons = data['Lons'][:]
     Lats = data['Lats'][:]
@@ -88,15 +95,31 @@ if(__name__ == '__main__'):
         netn.append(networks0[i])
     networks = np.array(netn)
     #%% Write file
+    print('write files')
     dirWrite = '/Volumes/HD/network_clustering/clusteroutput/'
-    np.savez(dirWrite+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d'%(sp, exte[0],
-                                                                exte[1],
-                                                                exte[2],
-                                                                exte[3], K, L),
-            dendogram=Z, L=[L], K=[K], labels=labels, w=w, v=v,
-            field_plot=field_plot, vLats=vLats, vLons=vLons)
-    np.save(dirWrite+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d'%(sp, exte[0],
-                                                               exte[1],
-                                                               exte[2],
-                                                               exte[3], K, L),
-            networks)
+    if(season==''):
+        np.savez(dirWrite+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d'%(sp, exte[0],
+                                                                    exte[1],
+                                                                    exte[2],
+                                                                    exte[3], K, L),
+                dendogram=Z, L=[L], K=[K], labels=labels, w=w, v=v,
+                field_plot=field_plot, vLats=vLats, vLons=vLons)
+        np.save(dirWrite+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d'%(sp, exte[0],
+                                                                   exte[1],
+                                                                   exte[2],
+                                                                   exte[3], K, L),
+                networks)
+    else:
+        np.savez(dirWrite+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d_%s'%(sp, exte[0],
+                                                                    exte[1],
+                                                                    exte[2],
+                                                                    exte[3], K,
+                                                                    L, season),
+                dendogram=Z, L=[L], K=[K], labels=labels, w=w, v=v,
+                field_plot=field_plot, vLats=vLats, vLons=vLons)
+        np.save(dirWrite+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d_%s'%(sp, exte[0],
+                                                                   exte[1],
+                                                                   exte[2],
+                                                                   exte[3], K,
+                                                                   L, season),
+                networks)

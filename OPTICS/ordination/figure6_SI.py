@@ -127,7 +127,7 @@ for spi, sp in enumerate(spl):
     xticklabels = []
     for i, idx in enumerate(xticks):
         if(i%frac==0):
-            xticklabels.append(np.round(xiss[idx],5))
+            xticklabels.append(np.round(xiss[idx] / 1e-3,5))
         else:
             xticklabels.append('')        
     
@@ -166,7 +166,7 @@ for spi, sp in enumerate(spl):
     xticklabels = []
     for i, idx in enumerate(xticks):
         if(i%frac==0):
-            xticklabels.append(np.round(xiss[idx],5))
+            xticklabels.append(np.round(xiss[idx] / 1e-3,5))
         else:
             xticklabels.append('')
             
@@ -195,7 +195,7 @@ for spi, sp in enumerate(spl):
     if(spi//2==1):
         ax[spi//2, spi%2].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
         ax[spi//2, spi%2].set_xticks(xticks+0.5)
-        g1.set_xlabel('$\\xi$', fontsize=fs)
+        g1.set_xlabel('$\\xi\cdot10^{-3}$', fontsize=fs)
     else:
         g1.set_xticklabels([])
         g1.set_xticks([])

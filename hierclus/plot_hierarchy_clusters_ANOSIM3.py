@@ -38,10 +38,11 @@ def get_cmaps():
 
 if(__name__=='__main__'):
     its = 90 # number of iterations of hierarchical clustering used for plotting
-    sp = 25 # sinking speed (m/day)
-    if(sp==6):
+    sp = 6 # sinking speed (m/day)
+    season = 'winter'
+    if(sp==6 and season==''):
         K = 600
-    elif(sp in [11,250,25]):
+    else:
         K = 150
     exte = [1, 360, -75, 75]
     
@@ -51,16 +52,27 @@ if(__name__=='__main__'):
     #%% Plot the clusters (for subfig a)
     # load data
     dirRead = '/Volumes/HD/network_clustering/clusteroutput/'
-    dat = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d.npz'%(sp,exte[0],
-                                                               exte[1],
-                                                               exte[2],
-                                                               exte[3],K,K), allow_pickle=True)
+    if(season==''):
+        dat = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d.npz'%(sp, exte[0], exte[1], exte[2],
+                      exte[3], K, K),
+                      allow_pickle=True)
     
-    vLats = dat['vLats']; vLons= dat['vLons'];
-    networks = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d.npy'%(sp,exte[0],
-                                                               exte[1],
-                                                               exte[2],
-                                                               exte[3],K,K), allow_pickle=True)
+        networks = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d.npy'%(sp,
+                                                  exte[0],
+                                                  exte[1],
+                                                  exte[2],
+                                                  exte[3], K, K),
+                           allow_pickle=True)
+    else:
+        dat = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d_%s.npz'%(sp, exte[0], exte[1], exte[2],
+                      exte[3], K, K, season),
+                      allow_pickle=True)
+    
+        networks = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d_%s.npy'%(sp,
+                                                  exte[0],
+                                                  exte[1],
+                                                  exte[2],
+                                                  exte[3], K, K, season), allow_pickle=True)   
     # The colors of clusters
     colo = ["Oranges","Blues","Greys","Purples","Greens","Reds"]
     colorsg = sns.color_palette(colo[0], n_colors=18)[1:][:1]
@@ -86,7 +98,8 @@ if(__name__=='__main__'):
     #%
     cmap, cmap_r = get_cmaps() # create colormap for hierarchical bounds
     # Load the boundaries of hierarchical clusters:
-    fbounds = np.load('res/cluster_bounds_%dits_sp%d.npz'%(K,sp), allow_pickle=True)
+    fbounds = np.load('res/cluster%s_bounds_%dits_sp%d.npz'%(season,K,sp),
+                      allow_pickle=True)
     lats = fbounds['lats'][::-1][(K-its):-1]
     lons = fbounds['lons'][::-1][(K-its):-1]
     directions = fbounds['directions'][::-1][(K-its):-1]
@@ -104,7 +117,7 @@ if(__name__=='__main__'):
     #%% subfig c, the ANOSIM results
     perm = 999 # amount of permutations
     # Load result
-    ff = np.load('Distance_Matrix/ANOSIM_hierarchicalclus_sp%d_perm%d_its%d_mlat65.npz'%(sp, perm, its))
+    ff = np.load('Distance_Matrix/ANOSIM_hierarchicalclus%s_sp%d_perm%d_its%d_mlat65.npz'%(season,sp, perm, its))
     FP = ff['ForamP']
     FR = ff['ForamR']
     DinoP = ff['DinoP']
@@ -135,7 +148,7 @@ if(__name__=='__main__'):
                     tick.label.set_fontsize(fs) 
     
     ax.legend(custom_lines, ['Dinocysts','Foraminifera'], fontsize=fs, loc='lower right')
-                    
+
     ax2 = ax.twinx()
     ax2.set_yscale("log")
     ax2.set_ylim(0.0009,1.05)
@@ -154,6 +167,8 @@ if(__name__=='__main__'):
     ax2.plot(iterations,DinoP,'--', color=color, lw=lw)
     
     #%
-    plt.savefig('Distance_Matrix/hierarchical_clustering_ANOSIM_its%d_sp%d.pdf'%(its,sp), bbox_inches='tight', 
+    plt.savefig('Distance_Matrix/hierarchical_clustering%s_ANOSIM_its%d_sp%d.pdf'%(season,
+                                                                                   its,sp),
+                bbox_inches='tight', 
                 dpi=300)
     plt.show()

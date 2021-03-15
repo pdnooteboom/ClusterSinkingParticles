@@ -9,7 +9,7 @@ import numpy as np
 from skbio.stats.ordination import cca
 import pandas as pd
 from copy import copy
-from random import sample, seed
+from random import sample, seed, randint
 
 from time import time
 
@@ -17,7 +17,7 @@ ti = time()
 
 sp= 6 # sinking speed
 mins = 300 # s_min
-its = 999#10000 # Amount of iterations
+its = 9999#10000 # Amount of iterations
 # Set the xi parameter
 if(sp==6):
     if(mins==300):
@@ -49,6 +49,7 @@ sites =  np.array(['site %d'%(i) for i in range(data.shape[0])])
 species =  np.array(['species %d'%(i) for i in range(data.shape[1])])
 
 args = np.where(Dinolabels!=-1)
+Dargs = len(args[0])
 if(len(args[0])>2):
     data = data[args]
     sites = sites[args]
@@ -67,9 +68,8 @@ if(len(args[0])>2):
     CCA = cca(Y,X)  
     dinovar = CCA.proportion_explained[0]
 
-#    seed(28) # Apply a seed for reproducibility
+    seed(28) # Apply a seed for reproducibility
     for j in range(its): # loop over iterations numbers of random subsamples
-        seed(j) # Apply a seed for reproducibility
         #Apply CCA to the dinocyst data
         Dinoenv = ff['Dinoenv']
         Dinoenv_nn = ff['Dinoenv_nn']
@@ -77,7 +77,7 @@ if(len(args[0])>2):
         sites =  np.array(['site %d'%(i) for i in range(data.shape[0])])
         species =  np.array(['species %d'%(i) for i in range(data.shape[1])])
         
-        leftd = len(args[0]) # the number of sites in clusters
+        leftd = randint(2,len(sites)-2) # the number of sites in random clusters
         idleft = sample(range(len(Dinolabels)), leftd) # random subsample with this number (leftd)
     
         # Set up dataframes for CCA analysis    
@@ -98,45 +98,43 @@ if(len(args[0])>2):
     
 #%% Apply the CCA if the clustering is applied. Foraminifera
 varF_explained = []
-   
+
 data = ff['data']
 sites =  np.array(['site %d'%(i) for i in range(data.shape[0])])
 species =  np.array(['species %d'%(i) for i in range(data.shape[1])])
 
 args = np.where(Flabels!=-1)
+Fargs = len(args[0])
 if(len(args[0])>2):
     data = data[args]
     sites = sites[args]
     Fenv = Fenv[args]
     Fenv_nn = Fenv_nn[args]
-    
+
     X = pd.DataFrame(data, sites, species)
     Y = pd.DataFrame(Fenv, sites, envs)
     Y_nn = pd.DataFrame(Fenv_nn, sites, envs)
-    
+
     #del Y['N']
     del Y['Si']
     del Y['P']
     #del Y['temp']
     del Y['salt']
-    
+
     CCA = cca(Y,X)
     fvar = CCA.proportion_explained[0]
-    print('time (seconds): ',time()-ti)    
-    
-    
-#    seed(28) # Apply a seed for reproducibility
+
+    seed(28) # Apply a seed for reproducibility
     for j in range(its): # loop over iterations numbers
-        seed(j) # Apply a seed for reproducibility
         Fenv = ff['Fenv']
         Fenv_nn = ff['Fenv_nn']
         data = ff['data']
         sites =  np.array(['site %d'%(i) for i in range(data.shape[0])])
         species =  np.array(['species %d'%(i) for i in range(data.shape[1])])
-    
-        left = len(args[0]) # the number of sites in clusters
+
+        left = randint(2,len(sites)-2) # the number of sites in clusters
         idleft = sample(range(len(Flabels)), left) # random subsample with this number (leftd) 
-        
+
         # Set up dataframes for CCA analysis 
         X = pd.DataFrame(data[idleft], sites[idleft], species)
         Y = pd.DataFrame(Fenv[idleft], sites[idleft], envs)
@@ -158,4 +156,4 @@ print('fraction of %d iterations which explained more variance than the clustere
 print('Dinos: ',np.sum(np.array(varD_explained)>dinovar) / its)
 print('Forams: ',np.sum(np.array(varF_explained)>fvar) / its)
 print('fraction of total samples left (dinos and forams): ',
-      leftd/len(Dinolabels),'   ', left/len(Flabels))
+      Dargs/len(Dinolabels),'   ', Fargs/len(Flabels))

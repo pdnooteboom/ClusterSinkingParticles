@@ -38,7 +38,7 @@ def get_cmaps():
 
 if(__name__=='__main__'):
     its = 90 # number of iterations of hierarchical clustering used for plotting
-    sp = 6 # sinking speed (m/day)
+    sp = 25 # sinking speed (m/day)
     if(sp==6):
         K = 600
     elif(sp in [11,250,25]):
@@ -154,6 +154,6 @@ if(__name__=='__main__'):
     ax2.plot(iterations,DinoP,'--', color=color, lw=lw)
     
     #%
-    plt.savefig('Distance_Matrix/figure2_its%d_sp%d.pdf'%(its,sp), bbox_inches='tight', 
+    plt.savefig('Distance_Matrix/figure2%s_its%d_sp%d.pdf'%(its,sp), bbox_inches='tight', 
                 dpi=300)
     plt.show()

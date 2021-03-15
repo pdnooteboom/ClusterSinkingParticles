@@ -11,7 +11,7 @@ import seaborn as sns
 
 redFspecies = False
 
-sp = 6
+sp = 250
 Allvars = False
 noise = [True,False]
 plott=True#False#
@@ -173,7 +173,7 @@ xticks = np.linspace(0, (len(xiss) - 1), num_ticks, dtype=np.int)
 xticklabels = []
 for i, idx in enumerate(xticks):
     if(i%frac==0):
-        xticklabels.append(np.round(xiss[idx],5))
+        xticklabels.append(np.round(xiss[idx] / 1e-3, 1))
     else:
         xticklabels.append('')
         
@@ -186,30 +186,30 @@ DN[DN==0] = np.nan
 DN = pd.DataFrame(data=DN, index=minss, columns=xiss)
 FN = pd.DataFrame(data=FN, index=minss, columns=xiss)
 
-
-print('the p-values')
-fig, ax = plt.subplots(1,3, figsize=(16,8),
-                       gridspec_kw={'width_ratios':[1,1,0.08]})
-ax[0].get_shared_y_axes().join(ax[1])
-g1 = sns.heatmap(percD,cmap=cmapp,cbar=False,ax=ax[0], vmin=0, vmax=1, 
-                 xticklabels=xticklabels)
-ax[0].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
-ax[0].set_xticks(xticks+0.5)
-ax[0].set_yticklabels(minss,fontsize=fs-6, rotation='horizontal')
-g1.set_ylabel('$s_{min}$', fontsize=fs)
-g1.set_title('(a) dinocysts', fontsize=fs)
-g1.set_xlabel('$\\xi$', fontsize=fs)
-
-
-g2 = sns.heatmap(percF,cmap=cmapp,cbar=True,ax=ax[1],  vmin=0, vmax=1, 
-                 cbar_ax=ax[2], yticklabels=False)
-ax[1].set_xticks(xticks+0.5)
-ax[1].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
-g2.set_title('(b) foraminifera', fontsize=fs)
-g2.set_xlabel('$\\xi$', fontsize=fs)
-
-#plt.savefig('heatmap_CCA_sp%d.png'%(sp), dpi=300,bbox_inches='tight')
-plt.show()
+if(False):
+    print('the p-values')
+    fig, ax = plt.subplots(1,3, figsize=(16,8),
+                           gridspec_kw={'width_ratios':[1,1,0.08]})
+    ax[0].get_shared_y_axes().join(ax[1])
+    g1 = sns.heatmap(percD,cmap=cmapp,cbar=False,ax=ax[0], vmin=0, vmax=1, 
+                     xticklabels=xticklabels)
+    ax[0].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
+    ax[0].set_xticks(xticks+0.5)
+    ax[0].set_yticklabels(minss,fontsize=fs-6, rotation='horizontal')
+    g1.set_ylabel('$s_{min}$', fontsize=fs)
+    g1.set_title('(a) dinocysts', fontsize=fs)
+    g1.set_xlabel('$\\xi$', fontsize=fs)
+    
+    
+    g2 = sns.heatmap(percF,cmap=cmapp,cbar=True,ax=ax[1],  vmin=0, vmax=1, 
+                     cbar_ax=ax[2], yticklabels=False)
+    ax[1].set_xticks(xticks+0.5)
+    ax[1].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
+    g2.set_title('(b) foraminifera', fontsize=fs)
+    g2.set_xlabel('$\\xi$', fontsize=fs)
+    
+    #plt.savefig('heatmap_CCA_sp%d.png'%(sp), dpi=300,bbox_inches='tight')
+    plt.show()
 
 
 
@@ -257,7 +257,7 @@ xticks = np.linspace(0, (len(xiss) - 1), num_ticks, dtype=np.int)
 xticklabels = []
 for i, idx in enumerate(xticks):
     if(i%frac==0):
-        xticklabels.append(np.round(xiss[idx],5))
+        xticklabels.append(np.round(xiss[idx]/1e-3,5))
     else:
         xticklabels.append('')
 
@@ -281,7 +281,7 @@ ax[0].set_xticks(xticks+0.5)
 ax[0].set_yticklabels(minss,fontsize=fs-6, rotation='horizontal')
 g1.set_ylabel('$s_{min}$', fontsize=fs)
 g1.set_title('(a) dinocysts', fontsize=fs)
-g1.set_xlabel('$\\xi$', fontsize=fs)
+g1.set_xlabel('$\\xi\cdot10^{-3}$', fontsize=fs)
 
 
 g2 = sns.heatmap(FN,cmap=cmap1,cbar=True,ax=ax[1],  vmin=-0.35, vmax=0.35, 
@@ -289,7 +289,7 @@ g2 = sns.heatmap(FN,cmap=cmap1,cbar=True,ax=ax[1],  vmin=-0.35, vmax=0.35,
 ax[1].set_xticks(xticks+0.5)
 ax[1].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
 g2.set_title('(b) foraminifera', fontsize=fs)
-g2.set_xlabel('$\\xi$', fontsize=fs)
+g2.set_xlabel('$\\xi\cdot10^{-3}$', fontsize=fs)
 
 if(redFspecies):
     plt.savefig('heatmap_redF_CCA_sp%d.png'%(sp), dpi=300,bbox_inches='tight')    

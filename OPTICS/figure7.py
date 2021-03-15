@@ -20,12 +20,33 @@ fs = 20
 biot = 'shannon'#'rich'#'CHAO'#'even'#   # The biodiversity index used
 extend='glob'#'SO'  # whether to use the global sedimentary data or in the Southern Hemisphere
     
+def get_sig(perms, biodc, alpha=0.05, onesided=False):
+    res = np.zeros(biodc.shape)
+    res2 = np.full(biodc.shape, '')
+    for i in range(biodc.shape[0]):
+        for j in range(biodc.shape[1]):
+            res[i,j] = np.sum(biodc[i,j]<perms) / len(perms)
+            if(onesided):
+                if(res[i,j]>alpha):
+                    res2[i,j] = 'l'
+            else:
+                if(np.abs(res[i,j])>alpha/2):
+                    res2[i,j] = 'l'
+    return res2
+
+
+
 #%% Plot the heatmaps
 fs=20
 maxxi = 0.1
       
+its = 999
+siglevel = 0.05
 for sp in spl: # for every sinking speed in spl
     print(sp)
+    
+
+    
     if('extend'=='SO'):
         if('even'==biot):
             ff = np.load('cb_res/cb_even_%d.npz'%(sp))        
@@ -73,12 +94,18 @@ for sp in spl: # for every sinking speed in spl
     DN = pd.DataFrame(data=Dbiod, index=minss, columns=xiss)
     FN = pd.DataFrame(data=Fbiod, index=minss, columns=xiss)
 
+
+    perms = np.load('cb_res/cbG_shannon_permutations_%d_%d.npz'%(sp, its))
+    sigD = get_sig(perms['Dbiod'], Dbiod)
+    sigF = get_sig(perms['Fbiod'], Fbiod)
+   
+
     # The figure
     fig, ax = plt.subplots(1,3, figsize=(16,8),
                            gridspec_kw={'width_ratios':[1,1,0.08]})
     ax[0].get_shared_y_axes().join(ax[1])
     g1 = sns.heatmap(DN,cmap=cmap1,cbar=False,ax=ax[0], vmin=vm[0], vmax=vm[1], 
-                     xticklabels=xticklabels, 
+                     xticklabels=xticklabels, annot=sigD, fmt='',
                      cbar_kws={'label': '$\overline{N}_c - \overline{N}_{nc}$'})
     ax[0].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
     ax[0].set_xticks(xticks+0.5)
@@ -87,10 +114,10 @@ for sp in spl: # for every sinking speed in spl
     g1.set_title('(a) dinocysts', fontsize=fs)
     g1.set_xlabel('$\\xi$', fontsize=fs)
     g2 = sns.heatmap(FN,cmap=cmap1,cbar=True,ax=ax[1], vmin=vm[0], vmax=vm[1], 
-                     cbar_ax=ax[2], yticklabels=False)
+                     cbar_ax=ax[2], yticklabels=False, annot=sigF, fmt='')
     g2.collections[0].colorbar.set_label('$\overline{N}^{nc}_s - \overline{N}^{c}_s$', 
                   fontsize=fs)
-    g2.collections[0].colorbar.extend = 'max'
+    g2.collections[0].colorbar.extend = 'both'
     ax[1].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
     ax[1].set_xticks(xticks+0.5)
     g2.set_title('(b) foraminifera', fontsize=fs)

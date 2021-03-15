@@ -6,7 +6,7 @@ Created on Mon Aug 31 13:49:01 2020
 @author: nooteboom
 """
 import os
-assert os.environ['CONDA_DEFAULT_ENV']=='Cartopy-py3', 'You should use the Cartopy_py3 conda environment here'
+assert os.environ['CONDA_DEFAULT_ENV'] in ['Cartopy-py3','Cartopy-py32'], 'You should use the Cartopy_py3 conda environment here'
 import numpy as np
 from sklearn.cluster import  cluster_optics_xi, cluster_optics_dbscan
 import matplotlib
@@ -61,6 +61,16 @@ def get_colors(sp=6):
     colorsg.reverse()
     return colorsg
 
+def shannon(vec):
+    # shannon biodiversity
+    assert len(vec.shape)==1, 'vec should be a vector'
+    vec = vec / np.sum(vec)
+    h = 0
+    for i in range(len(vec)):
+        if(vec[i]!=0):
+            h += -1*vec[i]*np.log(vec[i])
+    return h
+
     #%%
 
 if(__name__=='__main__'):        
@@ -75,7 +85,7 @@ if(__name__=='__main__'):
     if(sp==6):
         if(mins==300):
             opts = [
-                    ["xi", 0.002] # use xi clustering
+                    ["xi", 0.002] # use xi parameter
                     ]
     elif(sp==11):
         if(mins==200):
@@ -214,7 +224,8 @@ if(__name__=='__main__'):
 
     ax.set_title(panel_labels[0][1] +  a + ' = ' + str(b), size=10, fontsize=fs)
     ax.set_ylabel(r"$10^{-3}\cdot r(p_i)$", fontsize=fs)
-    ax.set_xlabel(r"$i$", fontsize=fs)
+
+    ax.set_xlabel(r"Sediment location # $i$", fontsize=fs)
     ax.tick_params(labelsize=fs)
 
     ax = f.add_subplot(gs[0,:6],projection=ccrs.PlateCarree())
@@ -306,6 +317,28 @@ if(__name__=='__main__'):
     f.savefig("figs/optics_sp%d_mins%d_withMDS"%(sp,mins), dpi=600, bbox_inches='tight')
     plt.show()
         
-        
-
-
+    #%% print the mean biodiversity including and excluding noisy locations
+    if(False):
+        meanSn = 0.
+        meanSc = 0.
+        co = 0
+        for i in range(data.shape[0]):
+            meanSn += shannon(data[i])
+            if(Flabels[i]!=-1):
+                co += 1
+                meanSc += shannon(data[i])
+          
+        print('mean Foram biodiversity including and excluding noisy locations:')
+        print(meanSn/data.shape[0],'   ',meanSc/co)
+    
+        meanSn = 0.
+        meanSc = 0.
+        co = 0
+        for i in range(Dinodata.shape[0]):
+            meanSn += shannon(Dinodata[i])
+            if(Dinolabels[i]!=-1):
+                co += 1
+                meanSc += shannon(Dinodata[i])
+          
+        print('mean Dino biodiversity including and excluding noisy locations:')
+        print(meanSn/Dinodata.shape[0],'   ',meanSc/co)

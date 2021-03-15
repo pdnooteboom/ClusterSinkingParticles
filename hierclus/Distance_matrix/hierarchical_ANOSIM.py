@@ -9,11 +9,12 @@ from skbio import DistanceMatrix
 from skbio.stats.distance import anosim
 
 if(__name__=='__main__'):
-    sp = 25 # sinking speed (m/day)
+    sp = 6 # sinking speed (m/day)
     maxlat = 65 # maximum latitude used for the sedimentary microplankton data
-    if(sp==6):
+    season = 'summer'
+    if(sp==6 and season==''):
         K=250
-    elif(sp in [11, 25,250]):
+    else:
         K=150
     exte = [1, 360, -75, 75]
     iterations = 90
@@ -45,17 +46,30 @@ if(__name__=='__main__'):
     
     #%% Load the clusters
     dirRead = '/Volumes/HD/network_clustering/clusteroutput/'
-    dat = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d.npz'%(sp,exte[0],
-                                                               exte[1],
-                                                               exte[2],
-                                                               exte[3],K,K), allow_pickle=True)
     
+    if(season==''):
+        dat = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d.npz'%(sp, exte[0], exte[1], exte[2],
+                      exte[3], K, K),
+                      allow_pickle=True)
+    
+        networks = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d.npy'%(sp,
+                                                  exte[0],
+                                                  exte[1],
+                                                  exte[2],
+                                                  exte[3], K, K),
+                           allow_pickle=True)
+    else:
+        dat = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d_%s.npz'%(sp, exte[0], exte[1], exte[2],
+                      exte[3], K, K, season),
+                      allow_pickle=True)
+    
+        networks = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d_%s.npy'%(sp,
+                                                  exte[0],
+                                                  exte[1],
+                                                  exte[2],
+                                                  exte[3], K, K, season), allow_pickle=True)
+
     vLats = dat['vLats']; vLons= dat['vLons'];
-    networks = np.load(dirRead+'hier_clus_sp%d_exte%d_%d_%d_%d_K%d_L%d.npy'%(sp,exte[0],
-                                                               exte[1],
-                                                               exte[2],
-                                                               exte[3],K,K), allow_pickle=True)
-    
     #%% The distance matrix based on taxonomy
     Ftaxdist = euclidean_distances(data)
     Dinotaxdist = euclidean_distances(Dinodata)
@@ -95,6 +109,10 @@ if(__name__=='__main__'):
             FR[its] = list(Fano)[4]
             
     #%% Save file with ANOSIM results
-    np.savez('ANOSIM_hierarchicalclus_sp%d_perm%d_its%d_mlat%d.npz'%(sp, perm, iterations, maxlat),
+    np.savez('ANOSIM_hierarchicalclus%s_sp%d_perm%d_its%d_mlat%d.npz'%(season,
+                                                                       sp,
+                                                                       perm,
+                                                                       iterations,
+                                                                       maxlat),
              ForamP = FP, DinoP = DinoP,
              ForamR = FR, DinoR = DinoR)
