@@ -7,6 +7,7 @@ import matplotlib.pylab as plt
 from copy import copy
 import matplotlib.colors as mcolors
 import seaborn as sns
+from matplotlib.patches import Patch
 
 redFspecies = True
 
@@ -200,6 +201,16 @@ for spi, sp in enumerate(spl):
         g1.set_xticklabels([])
         g1.set_xticks([])
     g1.set_title(tits[spi], fontsize=fs)
+
+legend_elements = [Patch(facecolor=cmap1(np.nan),
+                         label='-no cluster\n', linewidth=0)]
+leg = axbig.legend(handles=legend_elements, loc='upper left',
+             bbox_to_anchor=(-0.525, -0.1005, 0.1, 0.1), frameon=False,
+             handletextpad=-0.25)
+
+for patch in leg.get_patches():
+    patch.set_height(41)
+    patch.set_width(30)
     
  #   g2 = sns.heatmap(FN,cmap=cmap1,cbar=True,ax=ax[1],  vmin=-0.35, vmax=0.35, 
  #                    cbar_ax=ax[0,2], yticklabels=False, annot=sigF, fmt='')

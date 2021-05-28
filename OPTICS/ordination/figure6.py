@@ -8,10 +8,11 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 from copy import copy
 import matplotlib.colors as mcolors
 import seaborn as sns
+from matplotlib.patches import Patch
 
 redFspecies = False
 
-sp = 250
+sp = 6
 Allvars = False
 noise = [True,False]
 plott=True#False#
@@ -43,16 +44,16 @@ for mini,mins in enumerate(minss):
         else:
             ff = np.load(dirRead+'loops/prep_CCA_sp%d_smin%d%s_%.5f.npz'%(sp, mins, opts[0], opts[1]))
         #%%
-        
+
         Dinolabels = ff['Dinolabels']
         Dinolabels_full = copy(Dinolabels)
         Dinoenv = ff['Dinoenv']
         Dinomaxs = {}; Fmaxs = {};
         envs = ff['envnames']
-        if(Allvars):   
-            envsplt = ff['envnames']    
-        else:  
-            envsplt = ff['envnames']    
+        if(Allvars):
+            envsplt = ff['envnames']
+        else:
+            envsplt = ff['envnames']
             envsplt = ['temp','N']
         Flabels = ff['Flabels']
         Flabelsfull = copy(Flabels)
@@ -279,9 +280,9 @@ g1 = sns.heatmap(DN,cmap=cmap1,cbar=False,ax=ax[0], vmin=-0.35, vmax=0.35,
 ax[0].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
 ax[0].set_xticks(xticks+0.5)
 ax[0].set_yticklabels(minss,fontsize=fs-6, rotation='horizontal')
-g1.set_ylabel('$s_{min}$', fontsize=fs)
+g1.set_ylabel('minimum size of clusters ($s_{min}$)', fontsize=fs)
 g1.set_title('(a) dinocysts', fontsize=fs)
-g1.set_xlabel('$\\xi\cdot10^{-3}$', fontsize=fs)
+g1.set_xlabel('level of isolation ($\\xi\cdot10^{-3}$)', fontsize=fs)
 
 
 g2 = sns.heatmap(FN,cmap=cmap1,cbar=True,ax=ax[1],  vmin=-0.35, vmax=0.35, 
@@ -289,7 +290,17 @@ g2 = sns.heatmap(FN,cmap=cmap1,cbar=True,ax=ax[1],  vmin=-0.35, vmax=0.35,
 ax[1].set_xticks(xticks+0.5)
 ax[1].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
 g2.set_title('(b) foraminifera', fontsize=fs)
-g2.set_xlabel('$\\xi\cdot10^{-3}$', fontsize=fs)
+g2.set_xlabel('level of isolation ($\\xi\cdot10^{-3}$)', fontsize=fs)
+
+legend_elements = [Patch(facecolor=cmap1(np.nan),
+                         label='-no cluster\n', linewidth=0)]
+leg = ax[2].legend(handles=legend_elements, loc='upper left',
+             bbox_to_anchor=(-0.525, -0.103, 0.1, 0.1), frameon=False,
+             handletextpad=-0.25)
+
+for patch in leg.get_patches():
+    patch.set_height(41.)
+    patch.set_width(30)
 
 if(redFspecies):
     plt.savefig('heatmap_redF_CCA_sp%d.png'%(sp), dpi=300,bbox_inches='tight')    
