@@ -6,7 +6,7 @@ Created on Mon Aug 31 13:49:01 2020
 @author: nooteboom
 """
 import os
-assert os.environ['CONDA_DEFAULT_ENV'] in ['Cartopy-py3','Cartopy-py32'], 'You should use the Cartopy_py3 conda environment here'
+#assert os.environ['CONDA_DEFAULT_ENV'] in ['Cartopy-py3','Cartopy-py32'], 'You should use the Cartopy_py3 conda environment here'
 import numpy as np
 from sklearn.cluster import  cluster_optics_xi, cluster_optics_dbscan
 import matplotlib
@@ -284,7 +284,7 @@ if(__name__=='__main__'):
             ax.scatter(xF01, xF02, c=noisecolor, s=10,alpha=0.5, marker='X')
         else:
             ax.scatter(xF1[w0], xF2[w0], c=colorsg[li], s=80, 
-                       alpha=alpha, marker='X')
+                       alpha=alpha, marker='X',)
     
     ax.set_title('(d) Foraminifera', fontsize=fs)
     ax.set_xlabel('first MDS axis', fontsize=fs)
@@ -303,7 +303,7 @@ if(__name__=='__main__'):
             ax.scatter(xD01, xD02, c=noisecolor, s=25,alpha=0.5,marker='o')
         else:
             p = ax.scatter(xD1[w0], xD2[w0], c=colorsg[li], s=50, 
-                           alpha=alpha,marker='o')
+                           alpha=alpha,marker='o', edgecolors='k')
     
     ax.set_title('(c) Dinocysts', fontsize=fs)
     ax.set_xlabel('first MDS axis', fontsize=fs)

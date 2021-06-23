@@ -12,7 +12,7 @@ from matplotlib.patches import Patch
 
 redFspecies = False
 
-sp = 6
+sp = 11
 Allvars = False
 noise = [True,False]
 plott=True#False#
@@ -298,9 +298,15 @@ leg = ax[2].legend(handles=legend_elements, loc='upper left',
              bbox_to_anchor=(-0.525, -0.103, 0.1, 0.1), frameon=False,
              handletextpad=-0.25)
 
+
+
 for patch in leg.get_patches():
     patch.set_height(41.)
     patch.set_width(30)
+
+
+ax[2].set_ylabel('Explained variability increase', rotation=270,
+                 labelpad=15)
 
 if(redFspecies):
     plt.savefig('heatmap_redF_CCA_sp%d.png'%(sp), dpi=300,bbox_inches='tight')    

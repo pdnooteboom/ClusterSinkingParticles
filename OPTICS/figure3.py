@@ -7,7 +7,7 @@ Created on Wed Sep  9 16:08:11 2020
 """
 
 import os
-assert os.environ['CONDA_DEFAULT_ENV']=='Cartopy-py3', 'You should use the conda environment Cartopy-py3'
+assert os.environ['CONDA_DEFAULT_ENV']=='Cartopy-py32', 'You should use the conda environment Cartopy-py3'
 import numpy as np
 import matplotlib.pylab as plt
 import cartopy.crs as ccrs
@@ -20,7 +20,7 @@ import cartopy.feature as cfeature
 
 if(__name__=='__main__'):
     sns.set(context='paper', style='whitegrid')
-    sp = 250 # the sinking speed (m/day)
+    sp = 6 # the sinking speed (m/day)
     mins = 300 # The variable s_{min} that is used for subplots (a) and (b)
     fs = 28 # the fontsize for plotting
     si=8 # the markersize for plotting

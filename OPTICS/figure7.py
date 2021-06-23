@@ -94,8 +94,8 @@ for sp in spl: # for every sinking speed in spl
 
 
     perms = np.load('cb_res/cbG_shannon_permutations_%d_%d.npz'%(sp, its))
-    sigD = get_sig(perms['Dbiod'], Dbiod)
-    sigF = get_sig(perms['Fbiod'], Fbiod)
+    sigD = get_sig(perms['Dbiod'], Dbiod, alpha=siglevel)
+    sigF = get_sig(perms['Fbiod'], Fbiod, alpha=siglevel)
    
 
     # The figure
@@ -103,7 +103,7 @@ for sp in spl: # for every sinking speed in spl
                            gridspec_kw={'width_ratios':[1,1,0.08]})
     ax[0].get_shared_y_axes().join(ax[1])
     g1 = sns.heatmap(DN,cmap=cmap1,cbar=False,ax=ax[0], vmin=vm[0], vmax=vm[1], 
-                     xticklabels=xticklabels, #annot=sigD, fmt='',
+                     xticklabels=xticklabels, annot=sigD, fmt='',
                      cbar_kws={'label': '$\overline{N}_c - \overline{N}_{nc}$'})
     ax[0].set_xticklabels(xticklabels, fontsize=fs-6, rotation='vertical')
     ax[0].set_xticks(xticks+0.5)
@@ -112,7 +112,7 @@ for sp in spl: # for every sinking speed in spl
     g1.set_title('(a) dinocysts', fontsize=fs)
     g1.set_xlabel('level of isolation ($\\xi$)', fontsize=fs)
     g2 = sns.heatmap(FN,cmap=cmap1,cbar=True,ax=ax[1], vmin=vm[0], vmax=vm[1],
-                     cbar_ax=ax[2], yticklabels=False)#, annot=sigF, fmt='')
+                     cbar_ax=ax[2], yticklabels=False, annot=sigF, fmt='')
     g2.collections[0].colorbar.set_label('$\overline{N}^{nc}_s - \overline{N}^{c}_s$', 
                   fontsize=fs)
     g2.collections[0].colorbar.extend = 'both'
